@@ -46,8 +46,39 @@
 
     <div id="panel-import" class="admin-panel">
       <div class="card">
+        <h3 style="color:#fff;margin-bottom:12px;font-size:15px">智能导入</h3>
+        <p style="color:#888;font-size:12px;margin-bottom:12px">选择分组和时段，粘贴人员名单（逗号/顿号/换行分隔）</p>
+        <div class="form-group">
+          <label>选择分组</label>
+          <select id="smartImportGroup" onchange="onSmartGroupChange()">
+            <option value="">请选择分组</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>选择时段</label>
+          <select id="smartImportSlot">
+            <option value="">请先选择分组</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>分值</label>
+          <input type="number" id="smartImportScore" class="form-input" value="0" step="any">
+        </div>
+        <div class="form-group">
+          <label>日期</label>
+          <input type="date" id="smartImportDate" class="form-input">
+        </div>
+        <div class="form-group">
+          <label>粘贴人员名单</label>
+          <textarea id="smartImportNames" class="form-input" rows="4" placeholder="贪狼，二哥，张三&#10;或每行一个名字&#10;支持逗号、顿号、换行分隔"></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="handleSmartImport()">智能导入</button>
+        <div id="smartImportResult"></div>
+      </div>
+
+      <div class="card">
         <h3 style="color:#fff;margin-bottom:12px;font-size:15px">Excel 批量导入</h3>
-        <p style="color:#888;font-size:12px;margin-bottom:8px">支持列表格式（姓名/分组/时段/分值/日期）和矩阵格式（行=人员，列=分组-时段）</p>
+        <p style="color:#888;font-size:12px;margin-bottom:8px">支持列表格式和矩阵格式</p>
         <input type="file" id="importFile" accept=".xlsx,.xls" class="form-input" style="margin-bottom:8px">
         <button class="btn btn-primary" onclick="handleImport()">开始导入</button>
         <div id="importResult"></div>

@@ -53,7 +53,7 @@ function switchTab(tabName) {
   if (panel) panel.classList.add('active');
 
   if (tabName === 'groups') loadGroups();
-  else if (tabName === 'import') loadGroupsForImport();
+  else if (tabName === 'import') loadSmartImportGroups();
   else if (tabName === 'announcements') loadAnnouncements();
   else if (tabName === 'settings') loadSettings();
 }
@@ -169,15 +169,94 @@ async function deleteSlot(id) {
   if (res.success) loadGroups();
 }
 
-async function loadGroupsForImport() {
-  const { results: groups } = await apiGet('/groups');
-  const select = document.getElementById('importGroupFilter');
+async function loadSmartImportGroups() {
+  const res = await apiGet('/groups');
+  const select = document.getElementById('smartImportGroup');
   if (!select) return;
-  let html = '<option value="">所有分组</option>';
-  for (const g of (groups?.data || [])) {
+  let html = '<option value="">请选择分组</option>';
+  for (const g of (res.data || [])) {
     html += `<option value="${g.id}">${esc(g.name)}</option>`;
   }
   select.innerHTML = html;
+  document.getElementById('smartImportSlot').innerHTML = '<option value="">请先选择分组</option>';
+  document.getElementById('smartImportDate').value = todayDateStr();
+}
+
+function todayDateStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+async function onSmartGroupChange() {
+  const groupId = document.getElementById('smartImportGroup').value;
+  const select = document.getElementById('smartImportSlot');
+  if (!groupId) { select.innerHTML = '<option value="">请先选择分组</option>'; return; }
+
+  select.innerHTML = '<option value="">加载中...</option>';
+  const allSlots = await apiGet('/time-slots');
+  let slots = [];
+  if (allSlots.success && allSlots.data) {
+    slots = allSlots.data.filter(s => s.group_id == groupId);
+  }
+  let html = '<option value="">请选择时段</option>';
+  for (const s of slots) {
+    html += `<option value="${s.id}">${esc(s.time_range)}</option>`;
+  }
+  select.innerHTML = html;
+}
+
+async function handleSmartImport() {
+  const groupId = document.getElementById('smartImportGroup').value;
+  const slotId = document.getElementById('smartImportSlot').value;
+  const score = parseFloat(document.getElementById('smartImportScore').value) || 0;
+  const recordDate = document.getElementById('smartImportDate').value;
+  const namesText = document.getElementById('smartImportNames').value.trim();
+
+  if (!groupId) return showToast('请选择分组', true);
+  if (!slotId) return showToast('请选择时段', true);
+  if (!namesText) return showToast('请输入人员名单', true);
+
+  const names = namesText.split(/[,，、\n\r]+/).map(n => n.trim()).filter(n => n);
+  if (names.length === 0) return showToast('未识别到有效姓名', true);
+
+  const resultDiv = document.getElementById('smartImportResult');
+  resultDiv.innerHTML = `<div class="loading">正在导入 ${names.length} 人...</div>`;
+
+  const res = await apiGet('/groups');
+  const groups = res.data || [];
+  const group = groups.find(g => g.id == groupId);
+
+  const allSlots = await apiGet('/time-slots');
+  let slotInfo = null;
+  if (allSlots.success && allSlots.data) {
+    for (const s of allSlots.data) {
+      if (s.group_id == groupId && s.id == slotId) {
+        slotInfo = s;
+        break;
+      }
+    }
+  }
+
+  const rows = names.map(name => ({
+    person_name: name,
+    group_name: group ? group.name : '',
+    slot_name: slotInfo ? (slotInfo.name || slotInfo.time_range) : '',
+    score: score,
+    record_date: recordDate || todayDateStr()
+  }));
+
+  const importRes = await apiAuthPost('/import', { rows }, adminToken);
+  if (importRes.success) {
+    let msg = `成功导入 ${importRes.imported} 人`;
+    if (importRes.errors && importRes.errors.length > 0) {
+      msg += '\n错误: ' + importRes.errors.map(e => e.message).join(', ');
+    }
+    resultDiv.innerHTML = `<div class="import-result success">${msg}</div>`;
+    showToast(`已导入 ${importRes.imported} 人`);
+  } else {
+    resultDiv.innerHTML = `<div class="import-result error">${importRes.error}</div>`;
+    showToast(importRes.error, true);
+  }
 }
 
 async function handleImport() {
