@@ -2,9 +2,7 @@ import { jsonSuccess, jsonError, verifyAdmin, formatBeijingNow } from './_shared
 
 export async function onRequestGet({ request, env }) {
   try {
-    try { await env.DB.prepare(`ALTER TABLE duty_groups ADD COLUMN name TEXT`).run(); } catch (e) {}
-    try { await env.DB.prepare(`ALTER TABLE duty_groups ADD COLUMN bind_group_id INTEGER`).run(); } catch (e) {}
-    try { await env.DB.prepare(`ALTER TABLE duty_slot_persons ADD COLUMN time_range TEXT`).run(); } catch (e) {}
+    try { await env.DB.prepare(`ALTER TABLE duty_projects ADD COLUMN bind_group_id INTEGER`).run(); } catch (e) {}
 
     const url = new URL(request.url);
     const dutyProjectId = url.searchParams.get('duty_project_id');
@@ -26,11 +24,9 @@ export async function onRequestGet({ request, env }) {
     const pp = projectIds.map(() => '?').join(',');
 
     const { results: dutyGroups } = await env.DB.prepare(
-      `SELECT dg.*, g.name as bind_group_name
-       FROM duty_groups dg
-       LEFT JOIN groups g ON dg.bind_group_id = g.id
-       WHERE dg.duty_project_id IN (${pp})
-       ORDER BY dg.order_index ASC, dg.id ASC`
+      `SELECT * FROM duty_groups
+       WHERE duty_project_id IN (${pp})
+       ORDER BY order_index ASC, id ASC`
     ).bind(...projectIds).all();
 
     const groupIds = (dutyGroups || []).map(dg => dg.id);
@@ -106,7 +102,7 @@ export async function onRequestDelete({ request, env }) {
     }
     if (type === 'slot' && body.id) {
       await env.DB.prepare(`DELETE FROM duty_slot_persons WHERE id = ?`).bind(body.id).run();
-      return jsonSuccess({ message: '时段人员配置已删除' });
+      return jsonSuccess({ message: '人员配置已删除' });
     }
 
     return jsonError('未知操作类型', 400);
@@ -116,7 +112,7 @@ export async function onRequestDelete({ request, env }) {
 }
 
 async function addDutyGroup(body, env) {
-  const { duty_project_id, name, bind_group_id, order_index } = body;
+  const { duty_project_id, name, order_index } = body;
   if (!duty_project_id) return jsonError('缺少值班项目 ID', 400);
   if (!name || !name.trim()) return jsonError('值班分组名称不能为空', 400);
 
@@ -126,13 +122,13 @@ async function addDutyGroup(body, env) {
   if (!rootDutyProject) return jsonError('值班项目不存在', 400);
 
   await env.DB.prepare(
-    `INSERT INTO duty_groups (duty_project_id, name, bind_group_id, order_index) VALUES (?, ?, ?, ?)`
-  ).bind(duty_project_id, name.trim(), bind_group_id || null, order_index || 0).run();
+    `INSERT INTO duty_groups (duty_project_id, name, order_index) VALUES (?, ?, ?)`
+  ).bind(duty_project_id, name.trim(), order_index || 0).run();
   return jsonSuccess({ message: '值班分组创建成功' });
 }
 
 async function updateDutyGroup(body, env) {
-  const { id, name, bind_group_id, order_index } = body;
+  const { id, name, order_index } = body;
   if (!id) return jsonError('缺少值班分组 ID', 400);
 
   if (name !== undefined && name.trim()) {
@@ -140,9 +136,6 @@ async function updateDutyGroup(body, env) {
   }
   if (order_index !== undefined) {
     await env.DB.prepare(`UPDATE duty_groups SET order_index = ? WHERE id = ?`).bind(order_index, id).run();
-  }
-  if (bind_group_id !== undefined) {
-    await env.DB.prepare(`UPDATE duty_groups SET bind_group_id = ? WHERE id = ?`).bind(bind_group_id || null, id).run();
   }
   return jsonSuccess({ message: '已更新' });
 }
@@ -156,7 +149,7 @@ async function addDutySlotPerson(body, env) {
   await env.DB.prepare(
     `INSERT INTO duty_slot_persons (duty_group_id, time_range, persons, order_index) VALUES (?, ?, ?, ?)`
   ).bind(duty_group_id, time_range.trim(), persons.trim(), order_index || 0).run();
-  return jsonSuccess({ message: '时段人员配置成功' });
+  return jsonSuccess({ message: '人员配置成功' });
 }
 
 async function updateDutySlotPerson(body, env) {
@@ -184,11 +177,12 @@ async function autoScore(body, env) {
   const now = formatBeijingNow();
 
   const { results: configs } = await env.DB.prepare(
-    `SELECT dsp.persons, dg.bind_group_id, g.score_weight
+    `SELECT dsp.persons, dp.bind_group_id, g.score_weight
      FROM duty_slot_persons dsp
      LEFT JOIN duty_groups dg ON dsp.duty_group_id = dg.id
-     LEFT JOIN groups g ON dg.bind_group_id = g.id
-     WHERE dg.bind_group_id IS NOT NULL`
+     LEFT JOIN duty_projects dp ON dg.duty_project_id = dp.id
+     LEFT JOIN groups g ON dp.bind_group_id = g.id
+     WHERE dp.bind_group_id IS NOT NULL`
   ).all();
 
   let imported = 0;

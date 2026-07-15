@@ -71,7 +71,9 @@ export async function onRequestPost({ env }) {
       `CREATE TABLE IF NOT EXISTS duty_projects (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL UNIQUE,
-        order_index INTEGER NOT NULL DEFAULT 0
+        bind_group_id INTEGER,
+        order_index INTEGER NOT NULL DEFAULT 0,
+        FOREIGN KEY (bind_group_id) REFERENCES groups(id) ON DELETE SET NULL
       )`
     ).run();
 
@@ -80,10 +82,8 @@ export async function onRequestPost({ env }) {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         duty_project_id INTEGER NOT NULL,
         name TEXT NOT NULL,
-        bind_group_id INTEGER,
         order_index INTEGER NOT NULL DEFAULT 0,
-        FOREIGN KEY (duty_project_id) REFERENCES duty_projects(id) ON DELETE CASCADE,
-        FOREIGN KEY (bind_group_id) REFERENCES groups(id) ON DELETE SET NULL
+        FOREIGN KEY (duty_project_id) REFERENCES duty_projects(id) ON DELETE CASCADE
       )`
     ).run();
 
