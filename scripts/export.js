@@ -65,32 +65,4 @@ async function exportRankings() {
   }
 }
 
-async function exportRecords() {
-  try {
-    const name = document.getElementById('exportNameFilter')?.value || '';
-    let path = '/records?';
-    if (name) path += `name=${encodeURIComponent(name)}&`;
-
-    const res = await apiGet(path);
-    const records = res.data || [];
-
-    const header = ['姓名', '分组', '时段', '分值', '日期', '导入时间'];
-    const rows = records.map(r => [
-      r.person_name,
-      r.group_name || '',
-      r.slot_name || r.time_range || '',
-      r.score,
-      r.record_date,
-      r.created_at
-    ]);
-
-    const workbook = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
-    XLSX.utils.book_append_sheet(workbook, ws, '记录明细');
-    XLSX.writeFile(workbook, 'records.xlsx');
-  } catch(e) {
-    alert('导出失败: ' + e.message);
-  }
-}
-
 document.addEventListener('DOMContentLoaded', loadExportPreview);
