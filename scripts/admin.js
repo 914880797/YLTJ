@@ -73,7 +73,7 @@ async function loadGroups() {
         <div class="group-meta">${g.slot_count || 0} 个时段</div>
       </div>
       <div class="group-actions">
-        ${g.has_slots !== 0 ? `<button onclick="loadSlots(${g.id}, '${esc(g.name)}')">时段管理</button>` : `<span style="color:#666;font-size:11px">无时段</span>`}
+        ${g.has_slots !== 0 ? `<button onclick="loadSlots(${g.id}, '${esc(g.name)}')">时段管理</button>` : ''}
         <button onclick="editGroup(${g.id}, '${esc(g.name)}', ${g.order_index}, ${g.has_slots||1})">编辑</button>
         ${g.order_index > 1 ? `<button onclick="moveGroup(${g.id}, -1)">上移</button>` : ''}
         ${g.order_index < (res.data?.length || 0) ? `<button onclick="moveGroup(${g.id}, 1)">下移</button>` : ''}
