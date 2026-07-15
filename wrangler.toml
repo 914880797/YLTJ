@@ -1,0 +1,8 @@
+name = "yltj"
+main = "functions/[[path]].js"
+compatibility_date = "2025-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "yltj-db"
+database_id = "e651294b-78ca-42f5-9971-fb7aacff3013"
