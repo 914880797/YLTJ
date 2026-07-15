@@ -183,6 +183,21 @@ async function autoScore(body, env) {
      WHERE dp.bind_group_id IS NOT NULL`
   ).all();
 
+  if (!configs || configs.length === 0) {
+    const { results: diag } = await env.DB.prepare(
+      `SELECT id, name, bind_group_id FROM duty_projects`
+    ).all();
+    return jsonSuccess({
+      message: `未找到需要加分的人员配置`,
+      imported: 0,
+      debug: {
+        configCount: 0,
+        date: recordDate,
+        projects: (diag || []).map(p => ({ name: p.name, bind_group_id: p.bind_group_id }))
+      }
+    });
+  }
+
   let imported = 0;
   const errors = [];
   const slotCache = {};
@@ -241,5 +256,5 @@ async function autoScore(body, env) {
     }
   }
 
-  return jsonSuccess({ message: `已为今日(${recordDate})加分: ${imported} 条记录`, imported, errors });
+  return jsonSuccess({ message: `已为今日(${recordDate})加分: ${imported} 条记录`, imported, errors, debug: { configCount: (configs || []).length, date: recordDate } });
 }
