@@ -9,10 +9,10 @@ async function loadExportPreview() {
   container.innerHTML = '<div class="loading">加载中...</div>';
 
   try {
-    const { results: groups } = await apiGet('/groups');
+    const groups = await apiGet('/groups');
     const groupNames = (groups?.data || []).map(g => g.name);
 
-    const { results: rankings } = await apiGet('/rankings');
+    const rankings = await apiGet('/rankings');
     const data = rankings?.data || [];
 
     if (data.length === 0) {
@@ -42,10 +42,10 @@ async function loadExportPreview() {
 
 async function exportRankings() {
   try {
-    const { results: groups } = await apiGet('/groups');
+    const groups = await apiGet('/groups');
     const groupNames = (groups?.data || []).map(g => g.name);
 
-    const { results: rankings } = await apiGet('/rankings');
+    const rankings = await apiGet('/rankings');
     const data = rankings?.data || [];
 
     const header = ['姓名', ...groupNames, '总分'];
