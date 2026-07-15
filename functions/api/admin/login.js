@@ -1,4 +1,4 @@
-import { jsonSuccess, jsonError, hashPassword, verifyAdmin } from './_shared.js';
+import { jsonSuccess, jsonError, hashPassword } from '../_shared.js';
 
 export async function onRequestPost({ request, env }) {
   try {
