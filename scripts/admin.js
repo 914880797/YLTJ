@@ -755,6 +755,58 @@ async function handleAutoScore() {
   const resultDiv = document.getElementById('autoScoreResult');
   const dateInput = document.getElementById('autoScoreDate');
   const date = dateInput ? dateInput.value : '';
+  resultDiv.innerHTML = '<div class="loading">正在分析值班人员...</div>';
+
+  const preview = await apiAuthPost('/duty-config', { type: 'auto-score-preview', date: date || undefined }, adminToken);
+  if (!preview.success) {
+    resultDiv.innerHTML = `<div class="import-result error">${preview.error}</div>`;
+    return;
+  }
+
+  if (!preview.active || preview.active.length === 0) {
+    resultDiv.innerHTML = `<div class="import-result error">${preview.message || '无人员在班，无法加分'}</div>`;
+    return;
+  }
+
+  let html = `<div class="modal" style="max-width:500px;max-height:70vh;overflow-y:auto">
+    <h3 style="color:#fff;margin:0 0 8px;font-size:15px">加分确认 - ${date || '今天'}</h3>
+    <p style="color:#4caf50;font-size:13px;margin-bottom:8px">将加分 <strong>${preview.activeCount}</strong> 人</p>
+    <div style="max-height:200px;overflow-y:auto;margin-bottom:8px">
+      <table style="width:100%;font-size:12px">
+        <thead><tr><th style="text-align:left">姓名</th><th style="text-align:left">来源</th><th>分值</th></tr></thead>
+        <tbody>`;
+
+  for (const p of (preview.active || [])) {
+    html += `<tr><td style="color:#fff">${esc(p.name)}</td><td style="color:#888">${esc(p.source)}</td><td style="color:#4caf50;text-align:center">${p.score}</td></tr>`;
+  }
+
+  html += '</tbody></table></div>';
+
+  if (preview.excluded && preview.excluded.length > 0) {
+    html += `<div style="background:#2d1b1b;padding:8px;border-radius:4px;margin-bottom:8px">
+      <p style="color:#ef4444;font-size:13px;margin:0 0 4px">以下 <strong>${preview.excludedCount}</strong> 人因名前带"-"被排除（请假/停值）：</p>`;
+    for (const p of preview.excluded) {
+      html += `<p style="color:#ef8f8f;font-size:12px;margin:2px 0">${esc(p.name)} (${esc(p.source)})</p>`;
+    }
+    html += `<p style="color:#ef4444;font-size:11px;margin-top:6px">如需加分，请先在值班Tab中编辑人员名单，去掉"-"号。</p>
+    </div>`;
+  }
+
+  html += `<button class="btn btn-primary" onclick="confirmAutoScore('${date}')">确认加分</button>
+    <button class="btn btn-outline" style="margin-left:6px" onclick="this.closest('.modal-overlay').remove()">取消</button>
+  </div>`;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.style.display = 'block';
+  overlay.innerHTML = html;
+  document.body.appendChild(overlay);
+  resultDiv.innerHTML = '';
+}
+
+async function confirmAutoScore(date) {
+  document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
+  const resultDiv = document.getElementById('autoScoreResult');
   resultDiv.innerHTML = '<div class="loading">正在加分...</div>';
   const res = await apiAuthPost('/duty-config', { type: 'auto-score', date: date || undefined }, adminToken);
   if (res.success) {

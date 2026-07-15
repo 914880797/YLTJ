@@ -1,5 +1,78 @@
 import { jsonSuccess, jsonError, formatBeijingNow } from './_shared.js';
 
+export async function previewAutoScore(env, targetDate) {
+  let recordDate;
+  if (targetDate && /^\d{4}-\d{2}-\d{2}$/.test(targetDate)) {
+    recordDate = targetDate;
+  } else {
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2, '0');
+    const d = String(today.getDate()).padStart(2, '0');
+    recordDate = `${y}-${m}-${d}`;
+  }
+
+  const { results: configs } = await env.DB.prepare(
+    `SELECT dsp.persons, dsp.duty_group_id, dg.name as duty_group_name,
+            dp.id as duty_project_id, dp.name as duty_project_name,
+            dp.bind_group_id, g.name as bind_group_name, g.score_weight, g.has_slots
+     FROM duty_slot_persons dsp
+     LEFT JOIN duty_groups dg ON dsp.duty_group_id = dg.id
+     LEFT JOIN duty_projects dp ON dg.duty_project_id = dp.id
+     LEFT JOIN groups g ON dp.bind_group_id = g.id
+     WHERE dp.bind_group_id IS NOT NULL`
+  ).all();
+
+  if (!configs || configs.length === 0) {
+    const { results: diag } = await env.DB.prepare(
+      `SELECT id, name, bind_group_id FROM duty_projects`
+    ).all();
+    return {
+      message: '未找到需要加分的人员配置',
+      active: [],
+      excluded: [],
+      activeCount: 0,
+      excludedCount: 0,
+      debug: { projects: (diag || []).map(p => ({ name: p.name, bind_group_id: p.bind_group_id })) }
+    };
+  }
+
+  const activeList = [];
+  const excludedList = [];
+  const seenActive = new Set();
+  const seenExcluded = new Set();
+
+  for (const cfg of configs) {
+    const rawNames = cfg.persons.split(/[,，、\n\r]+/).map(n => n.trim()).filter(n => n);
+    const label = `${cfg.duty_project_name} > ${cfg.duty_group_name} > ${cfg.bind_group_name}`;
+
+    for (const name of rawNames) {
+      if (name.startsWith('-')) {
+        const realName = name.substring(1);
+        const key = `${realName}::${cfg.duty_project_id}`;
+        if (!seenExcluded.has(key)) {
+          seenExcluded.add(key);
+          excludedList.push({ name: realName, source: label });
+        }
+      } else {
+        const key = `${name}::${cfg.duty_project_id}`;
+        if (!seenActive.has(key)) {
+          seenActive.add(key);
+          activeList.push({ name, source: label, score: cfg.score_weight || 1 });
+        }
+      }
+    }
+  }
+
+  return {
+    active: activeList,
+    excluded: excludedList,
+    activeCount: activeList.length,
+    excludedCount: excludedList.length,
+    date: recordDate
+  };
+}
+
 export async function autoScoreDuty(env, targetDate) {
   let recordDate, y, m, d;
   if (targetDate && /^\d{4}-\d{2}-\d{2}$/.test(targetDate)) {

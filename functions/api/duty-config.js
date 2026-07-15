@@ -1,5 +1,5 @@
 import { jsonSuccess, jsonError, verifyAdmin } from './_shared.js';
-import { autoScoreDuty } from './_duty-score.js';
+import { autoScoreDuty, previewAutoScore } from './_duty-score.js';
 
 export async function onRequestGet({ request, env }) {
   try {
@@ -68,6 +68,10 @@ export async function onRequestPost({ request, env }) {
     if (type === 'slot') return addDutySlotPerson(body, env);
     if (type === 'auto-score') {
       const result = await autoScoreDuty(env, body.date);
+      return jsonSuccess(result);
+    }
+    if (type === 'auto-score-preview') {
+      const result = await previewAutoScore(env, body.date);
       return jsonSuccess(result);
     }
 
