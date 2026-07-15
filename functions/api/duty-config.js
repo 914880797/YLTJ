@@ -173,7 +173,8 @@ async function autoScore(body, env) {
   const now = formatBeijingNow();
 
   const { results: configs } = await env.DB.prepare(
-    `SELECT dsp.persons, dp.id as duty_project_id, dp.name as duty_project_name,
+    `SELECT dsp.persons, dsp.duty_group_id, dg.name as duty_group_name,
+            dp.id as duty_project_id, dp.name as duty_project_name,
             dp.bind_group_id, g.score_weight, g.has_slots
      FROM duty_slot_persons dsp
      LEFT JOIN duty_groups dg ON dsp.duty_group_id = dg.id
@@ -191,21 +192,22 @@ async function autoScore(body, env) {
     const weight = cfg.score_weight || 1;
     const groupId = cfg.bind_group_id;
 
-    const cacheKey = `${groupId}_${cfg.duty_project_id}`;
+    const cacheKey = `${groupId}_dutygroup_${cfg.duty_group_id}`;
     if (!slotCache[cacheKey]) {
       if (cfg.has_slots === 0) {
+        const slotName = `${cfg.duty_project_name}_${cfg.duty_group_name}`;
         const existing = await env.DB.prepare(
           `SELECT id FROM time_slots WHERE group_id = ? AND name = ?`
-        ).bind(groupId, cfg.duty_project_name).first();
+        ).bind(groupId, slotName).first();
         if (existing) {
           slotCache[cacheKey] = [existing.id];
         } else {
           await env.DB.prepare(
             `INSERT INTO time_slots (group_id, name, time_range, order_index) VALUES (?, ?, '全天', 0)`
-          ).bind(groupId, cfg.duty_project_name).run();
+          ).bind(groupId, slotName).run();
           const slot = await env.DB.prepare(
             `SELECT id FROM time_slots WHERE group_id = ? AND name = ?`
-          ).bind(groupId, cfg.duty_project_name).first();
+          ).bind(groupId, slotName).first();
           slotCache[cacheKey] = slot ? [slot.id] : [];
         }
       } else {
