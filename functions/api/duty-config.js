@@ -67,7 +67,7 @@ export async function onRequestPost({ request, env }) {
     if (type === 'group') return addDutyGroup(body, env);
     if (type === 'slot') return addDutySlotPerson(body, env);
     if (type === 'auto-score') {
-      const result = await autoScoreDuty(env);
+      const result = await autoScoreDuty(env, body.date);
       return jsonSuccess(result);
     }
 

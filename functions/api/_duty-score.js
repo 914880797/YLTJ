@@ -1,11 +1,16 @@
 import { jsonSuccess, jsonError, formatBeijingNow } from './_shared.js';
 
-export async function autoScoreDuty(env) {
-  const today = new Date();
-  const y = today.getFullYear();
-  const m = String(today.getMonth() + 1).padStart(2, '0');
-  const d = String(today.getDate()).padStart(2, '0');
-  const recordDate = `${y}-${m}-${d}`;
+export async function autoScoreDuty(env, targetDate) {
+  let recordDate, y, m, d;
+  if (targetDate && /^\d{4}-\d{2}-\d{2}$/.test(targetDate)) {
+    recordDate = targetDate;
+  } else {
+    const today = new Date();
+    y = today.getFullYear();
+    m = String(today.getMonth() + 1).padStart(2, '0');
+    d = String(today.getDate()).padStart(2, '0');
+    recordDate = `${y}-${m}-${d}`;
+  }
   const now = formatBeijingNow();
 
   const { results: configs } = await env.DB.prepare(

@@ -496,7 +496,8 @@ async function loadDuty() {
   const dutyData = configRes.success ? (configRes.data || []) : [];
 
   let html = '<button class="btn btn-primary" style="margin-bottom:12px" onclick="showAddDutyProject()">添加值班项目</button>';
-  html += '<button class="btn btn-outline" style="margin-bottom:12px;margin-left:6px" onclick="handleAutoScore()">一键今日加分</button>';
+  html += '<button class="btn btn-outline" style="margin-bottom:12px;margin-left:6px" onclick="handleAutoScore()">一键加分</button>';
+  html += '<input type="date" id="autoScoreDate" class="form-input" style="width:140px;margin-bottom:12px;margin-left:6px;display:inline-block">';
   html += '<div id="autoScoreResult" style="margin-bottom:8px"></div>';
 
   const projects = projectsRes.data || [];
@@ -546,6 +547,8 @@ async function loadDuty() {
   }
 
   container.innerHTML = html;
+  const dateInput = document.getElementById('autoScoreDate');
+  if (dateInput) dateInput.value = todayDateStr();
 }
 
 async function showAddDutyProject() {
@@ -750,8 +753,10 @@ async function deleteDutySlotPerson(id) {
 
 async function handleAutoScore() {
   const resultDiv = document.getElementById('autoScoreResult');
-  resultDiv.innerHTML = '<div class="loading">正在为今日值班人员加分...</div>';
-  const res = await apiAuthPost('/duty-config', { type: 'auto-score' }, adminToken);
+  const dateInput = document.getElementById('autoScoreDate');
+  const date = dateInput ? dateInput.value : '';
+  resultDiv.innerHTML = '<div class="loading">正在加分...</div>';
+  const res = await apiAuthPost('/duty-config', { type: 'auto-score', date: date || undefined }, adminToken);
   if (res.success) {
     resultDiv.innerHTML = `<div class="import-result success">${res.message}</div>`;
     showToast(res.message);
