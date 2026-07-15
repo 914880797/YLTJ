@@ -173,7 +173,8 @@ async function autoScore(body, env) {
   const now = formatBeijingNow();
 
   const { results: configs } = await env.DB.prepare(
-    `SELECT dsp.persons, dp.bind_group_id, g.score_weight
+    `SELECT dsp.persons, dp.id as duty_project_id, dp.name as duty_project_name,
+            dp.bind_group_id, g.score_weight, g.has_slots
      FROM duty_slot_persons dsp
      LEFT JOIN duty_groups dg ON dsp.duty_group_id = dg.id
      LEFT JOIN duty_projects dp ON dg.duty_project_id = dp.id
@@ -183,29 +184,53 @@ async function autoScore(body, env) {
 
   let imported = 0;
   const errors = [];
+  const slotCache = {};
 
   for (const cfg of (configs || [])) {
     const names = cfg.persons.split(/[,，、\n\r]+/).map(n => n.trim()).filter(n => n);
     const weight = cfg.score_weight || 1;
+    const groupId = cfg.bind_group_id;
 
-    const { results: slots } = await env.DB.prepare(
-      `SELECT id FROM time_slots WHERE group_id = ?`
-    ).bind(cfg.bind_group_id).all();
+    const cacheKey = `${groupId}_${cfg.duty_project_id}`;
+    if (!slotCache[cacheKey]) {
+      if (cfg.has_slots === 0) {
+        const existing = await env.DB.prepare(
+          `SELECT id FROM time_slots WHERE group_id = ? AND name = ?`
+        ).bind(groupId, cfg.duty_project_name).first();
+        if (existing) {
+          slotCache[cacheKey] = [existing.id];
+        } else {
+          await env.DB.prepare(
+            `INSERT INTO time_slots (group_id, name, time_range, order_index) VALUES (?, ?, '全天', 0)`
+          ).bind(groupId, cfg.duty_project_name).run();
+          const slot = await env.DB.prepare(
+            `SELECT id FROM time_slots WHERE group_id = ? AND name = ?`
+          ).bind(groupId, cfg.duty_project_name).first();
+          slotCache[cacheKey] = slot ? [slot.id] : [];
+        }
+      } else {
+        const { results: slots } = await env.DB.prepare(
+          `SELECT id FROM time_slots WHERE group_id = ?`
+        ).bind(groupId).all();
+        slotCache[cacheKey] = (slots || []).map(s => s.id);
+      }
+    }
 
-    if (!slots || slots.length === 0) continue;
+    const slotIds = slotCache[cacheKey] || [];
+    if (slotIds.length === 0) continue;
 
     for (const name of names) {
-      for (const slot of slots) {
+      for (const slotId of slotIds) {
         try {
           const existing = await env.DB.prepare(
             `SELECT id FROM score_records WHERE person_name = ? AND group_id = ? AND slot_id = ? AND record_date = ?`
-          ).bind(name, cfg.bind_group_id, slot.id, recordDate).first();
+          ).bind(name, groupId, slotId, recordDate).first();
           if (existing) continue;
 
           await env.DB.prepare(
             `INSERT INTO score_records (person_name, group_id, slot_id, score, record_date, created_at)
              VALUES (?, ?, ?, ?, ?, ?)`
-          ).bind(name, cfg.bind_group_id, slot.id, weight, recordDate, now).run();
+          ).bind(name, groupId, slotId, weight, recordDate, now).run();
           imported++;
         } catch (e) {
           errors.push({ person: name, message: e.message });
