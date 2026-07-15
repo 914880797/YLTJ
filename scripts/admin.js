@@ -691,8 +691,8 @@ async function deleteDutyGroup(id) {
 async function showAddDutySlotPerson(dutyGroupId) {
   const formHtml = `
     <div class="form-group">
-      <label>人员名单（逗号/顿号/换行分隔）</label>
-      <textarea id="newPersons_${dutyGroupId}" class="form-input" rows="3" placeholder="贪狼，二哥，张三"></textarea>
+      <label>人员名单（逗号/顿号/换行分隔，名前加 - 排除：-张三）</label>
+      <textarea id="newPersons_${dutyGroupId}" class="form-input" rows="3" placeholder="贪狼，二哥，-张三"></textarea>
     </div>
   `;
 
@@ -722,7 +722,7 @@ async function editDutySlotPerson(id, currentPersons) {
   overlay.innerHTML = `<div class="modal" style="max-width:400px">
     <h3 style="color:#fff;margin:0 0 10px;font-size:15px">修改人员</h3>
     <div class="form-group">
-      <label>人员名单（逗号/顿号/换行分隔）</label>
+      <label>人员名单（逗号/顿号/换行分隔，名前加 - 排除：-张三）</label>
       <textarea id="editPersons_${id}" class="form-input" rows="3">${esc(currentPersons)}</textarea>
     </div>
     <button class="btn btn-primary" onclick="submitEditDutySlotPerson(${id})">保存</button>

@@ -203,7 +203,7 @@ async function autoScore(body, env) {
   const slotCache = {};
 
   for (const cfg of (configs || [])) {
-    const names = cfg.persons.split(/[,，、\n\r]+/).map(n => n.trim()).filter(n => n);
+    const names = cfg.persons.split(/[,，、\n\r]+/).map(n => n.trim()).filter(n => n && !n.startsWith('-'));
     const weight = cfg.score_weight || 1;
     const groupId = cfg.bind_group_id;
 
