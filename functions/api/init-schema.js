@@ -7,7 +7,8 @@ export async function onRequestPost({ env }) {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL UNIQUE,
         order_index INTEGER NOT NULL DEFAULT 0,
-        score_weight REAL NOT NULL DEFAULT 1
+        score_weight REAL NOT NULL DEFAULT 1,
+        has_slots INTEGER NOT NULL DEFAULT 1
       )`
     ).run();
 

@@ -73,8 +73,8 @@ async function loadGroups() {
         <div class="group-meta">${g.slot_count || 0} 个时段</div>
       </div>
       <div class="group-actions">
-        <button onclick="loadSlots(${g.id}, '${esc(g.name)}')">时段管理</button>
-        <button onclick="editGroup(${g.id}, '${esc(g.name)}', ${g.order_index})">编辑</button>
+        ${g.has_slots !== 0 ? `<button onclick="loadSlots(${g.id}, '${esc(g.name)}')">时段管理</button>` : `<span style="color:#666;font-size:11px">无时段</span>`}
+        <button onclick="editGroup(${g.id}, '${esc(g.name)}', ${g.order_index}, ${g.has_slots||1})">编辑</button>
         ${g.order_index > 1 ? `<button onclick="moveGroup(${g.id}, -1)">上移</button>` : ''}
         ${g.order_index < (res.data?.length || 0) ? `<button onclick="moveGroup(${g.id}, 1)">下移</button>` : ''}
         <button class="btn-danger" onclick="deleteGroup(${g.id})">删除</button>
@@ -86,18 +86,64 @@ async function loadGroups() {
 }
 
 async function showAddGroup() {
-  const name = prompt('请输入分组名称：');
-  if (!name) return;
-  const res = await apiAuthPost('/groups', { name: name.trim() }, adminToken);
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.style.display = 'block';
+  overlay.innerHTML = `<div class="modal" style="max-width:350px">
+    <h3 style="color:#fff;margin:0 0 10px;font-size:15px">添加分组</h3>
+    <div class="form-group">
+      <label>分组名称</label>
+      <input type="text" id="newGroupName" class="form-input" placeholder="如: 分组A">
+    </div>
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="newHasSlots" checked> 需要时段管理（用于打卡计分）
+      </label>
+    </div>
+    <button class="btn btn-primary" onclick="addGroupFromModal()">确定</button>
+    <button class="btn btn-outline" style="margin-left:6px" onclick="this.closest('.modal-overlay').remove()">取消</button>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function addGroupFromModal() {
+  const name = document.getElementById('newGroupName').value.trim();
+  const hasSlots = document.getElementById('newHasSlots').checked ? 1 : 0;
+  if (!name) return showToast('请输入分组名称', true);
+  const res = await apiAuthPost('/groups', { name, has_slots: hasSlots }, adminToken);
+  document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
   showToast(res.success ? '分组创建成功' : (res.error || '操作失败'), !res.success);
   if (res.success) loadGroups();
 }
 
-async function editGroup(id, oldName, oldOrder) {
-  const name = prompt('修改分组名称：', oldName);
-  if (!name) return;
-  const res = await apiAuthPut('/groups', { id, name: name.trim(), order_index: oldOrder }, adminToken);
-  showToast(res.success ? '分组更新成功' : (res.error || '操作失败'), !res.success);
+async function editGroup(id, oldName, oldOrder, oldHasSlots) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.style.display = 'block';
+  overlay.innerHTML = `<div class="modal" style="max-width:350px">
+    <h3 style="color:#fff;margin:0 0 10px;font-size:15px">编辑分组</h3>
+    <div class="form-group">
+      <label>分组名称</label>
+      <input type="text" id="editGroupName" class="form-input" value="${esc(oldName)}">
+    </div>
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="editHasSlots" ${oldHasSlots !== 0 ? 'checked' : ''}> 需要时段管理（用于打卡计分）
+      </label>
+    </div>
+    <button class="btn btn-primary" onclick="submitEditGroup(${id})">保存</button>
+    <button class="btn btn-outline" style="margin-left:6px" onclick="this.closest('.modal-overlay').remove()">取消</button>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function submitEditGroup(id) {
+  const name = document.getElementById('editGroupName').value.trim();
+  const hasSlots = document.getElementById('editHasSlots').checked ? 1 : 0;
+  if (!name) return showToast('请输入分组名称', true);
+  const res = await apiAuthPut('/groups', { id, name, has_slots: hasSlots }, adminToken);
+  document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
+  showToast(res.success ? '已更新' : (res.error || '操作失败'), !res.success);
   if (res.success) loadGroups();
 }
 
