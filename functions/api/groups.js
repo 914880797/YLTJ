@@ -27,6 +27,18 @@ export async function onRequestPost({ request, env }) {
     await env.DB.prepare(
       `INSERT INTO groups (name, order_index, score_weight, has_slots) VALUES (?, ?, ?, ?)`
     ).bind(name.trim(), order_index || 0, score_weight !== undefined ? score_weight : 1, has_slots !== undefined ? has_slots : 1).run();
+
+    if ((has_slots !== undefined ? has_slots : 1) === 0) {
+      const groupResult = await env.DB.prepare(
+        `SELECT id FROM groups WHERE name = ?`
+      ).bind(name.trim()).first();
+      if (groupResult) {
+        await env.DB.prepare(
+          `INSERT INTO time_slots (group_id, name, time_range, order_index) VALUES (?, '默认', '全天', 0)`
+        ).bind(groupResult.id).run();
+      }
+    }
+
     return jsonSuccess({ message: '分组创建成功' });
   } catch (error) {
     return jsonError(error.message);
@@ -59,6 +71,16 @@ export async function onRequestPut({ request, env }) {
     if (has_slots !== undefined) {
       await env.DB.prepare(`UPDATE groups SET has_slots = ? WHERE id = ?`)
         .bind(has_slots, id).run();
+      if (has_slots === 0) {
+        const existingSlot = await env.DB.prepare(
+          `SELECT id FROM time_slots WHERE group_id = ? LIMIT 1`
+        ).bind(id).first();
+        if (!existingSlot) {
+          await env.DB.prepare(
+            `INSERT INTO time_slots (group_id, name, time_range, order_index) VALUES (?, '默认', '全天', 0)`
+          ).bind(id).run();
+        }
+      }
     }
     return jsonSuccess({ message: '分组更新成功' });
   } catch (error) {
