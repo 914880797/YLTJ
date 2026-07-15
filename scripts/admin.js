@@ -55,6 +55,7 @@ function switchTab(tabName) {
   if (tabName === 'groups') loadGroups();
   else if (tabName === 'import') loadSmartImportGroups();
   else if (tabName === 'announcements') loadAnnouncements();
+  else if (tabName === 'duty') loadDuty();
   else if (tabName === 'settings') loadSettings();
 }
 
@@ -432,6 +433,245 @@ function loadAll() {
   loadGroups();
   loadAnnouncements();
   loadSettings();
+}
+
+async function loadDuty() {
+  const container = document.getElementById('dutyList');
+  if (!container) return;
+  container.innerHTML = '<div class="loading">加载中...</div>';
+
+  const projectsRes = await apiGet('/duty-projects');
+  if (!projectsRes.success) {
+    container.innerHTML = `<div class="empty">${projectsRes.error}</div>`;
+    return;
+  }
+
+  const configRes = await apiGet('/duty-config');
+  const dutyData = configRes.success ? (configRes.data || []) : [];
+
+  let html = '<button class="btn btn-primary" style="margin-bottom:12px" onclick="showAddDutyProject()">添加值班项目</button>';
+  html += '<button class="btn btn-outline" style="margin-bottom:12px;margin-left:6px" onclick="handleAutoScore()">一键今日加分</button>';
+  html += '<div id="autoScoreResult" style="margin-bottom:8px"></div>';
+
+  const projects = projectsRes.data || [];
+
+  for (const dp of projects) {
+    const dpd = dutyData.find(d => d.id === dp.id) || { groups: [] };
+
+    html += `<div class="duty-project card" style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h3 style="color:#fff;font-size:14px;margin:0">${esc(dp.name)}</h3>
+        <div>
+          <button onclick="editDutyProject(${dp.id},'${esc(dp.name)}',${dp.order_index})" style="font-size:11px;padding:3px 8px">编辑</button>
+          <button onclick="deleteDutyProject(${dp.id})" class="btn-danger" style="font-size:11px;padding:3px 8px">删除</button>
+        </div>
+      </div>
+      <hr style="border-color:#333;margin:8px 0">`;
+
+    for (const dg of dpd.groups) {
+      html += `<div class="duty-group-item" style="margin-bottom:6px;padding:8px;background:#1a1a2e;border-radius:4px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="color:#4a6cf7;font-weight:600;font-size:13px">${esc(dg.group_name || '未知分组')}</span>
+          <button onclick="deleteDutyGroup(${dg.id})" class="btn-danger" style="font-size:10px;padding:2px 6px">删除</button>
+        </div>`;
+
+      for (const sp of (dg.slots || [])) {
+        html += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:12px;color:#b0b0c0">
+          <span style="min-width:80px">${esc(sp.time_range || sp.slot_name || '')}</span>
+          <span style="flex:1;color:#fff">${esc(sp.persons || '')}</span>
+          <button onclick="editDutySlotPerson(${sp.id},${sp.slot_id},'${esc(sp.persons || '')}')" style="font-size:10px;padding:2px 6px">编辑</button>
+          <button onclick="deleteDutySlotPerson(${sp.id})" class="btn-danger" style="font-size:10px;padding:2px 6px">删除</button>
+        </div>`;
+      }
+
+      html += `<div style="margin-top:4px" id="addSlotForm_${dg.id}">
+        <button onclick="showAddDutySlotPerson(${dg.id})" style="font-size:11px;padding:3px 8px">+ 添加时段人员</button>
+      </div></div>`;
+    }
+
+    html += `<div style="margin-top:6px">
+      <button onclick="showAddDutyGroup(${dp.id})" style="font-size:11px;padding:3px 8px">+ 添加分组</button>
+    </div></div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+async function showAddDutyProject() {
+  const name = prompt('请输入值班项目名称（如"会议"、"电报"）：');
+  if (!name) return;
+  const res = await apiAuthPost('/duty-projects', { name: name.trim() }, adminToken);
+  showToast(res.success ? '值班项目创建成功' : (res.error || '操作失败'), !res.success);
+  if (res.success) loadDuty();
+}
+
+async function editDutyProject(id, oldName, oldOrder) {
+  const name = prompt('修改值班项目名称：', oldName);
+  if (!name) return;
+  const res = await apiAuthPut('/duty-projects', { id, name: name.trim(), order_index: oldOrder }, adminToken);
+  showToast(res.success ? '已更新' : (res.error || '操作失败'), !res.success);
+  if (res.success) loadDuty();
+}
+
+async function deleteDutyProject(id) {
+  if (!confirm('确定删除该值班项目及其下所有关联？')) return;
+  const res = await apiAuthDelete('/duty-projects', { id }, adminToken);
+  showToast(res.success ? '已删除' : (res.error || '操作失败'), !res.success);
+  if (res.success) loadDuty();
+}
+
+async function showAddDutyGroup(dutyProjectId) {
+  const groupsRes = await apiGet('/groups');
+  if (!groupsRes.success) { showToast('加载分组失败', true); return; }
+
+  const groups = groupsRes.data || [];
+  let btnText = '';
+  for (const g of groups) {
+    btnText += `<button onclick="addDutyGroup(${dutyProjectId},${g.id})" style="display:block;width:100%;text-align:left;padding:8px;background:transparent;border:none;color:#b0b0c0;cursor:pointer;font-size:13px">${esc(g.name)}</button>`;
+  }
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.style.display = 'block';
+  overlay.innerHTML = `<div class="modal" style="max-width:300px">
+    <h3 style="color:#fff;margin:0 0 10px;font-size:15px">选择分组</h3>
+    <div>${btnText}</div>
+    <button class="btn btn-outline" style="margin-top:8px" onclick="this.closest('.modal-overlay').remove()">取消</button>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function addDutyGroup(dutyProjectId, groupId) {
+  const res = await apiAuthPost('/duty-config', { type: 'group', duty_project_id: dutyProjectId, group_id: groupId }, adminToken);
+  document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
+  showToast(res.success ? '分组已关联' : (res.error || '操作失败'), !res.success);
+  if (res.success) loadDuty();
+}
+
+async function deleteDutyGroup(id) {
+  if (!confirm('确定删除该分组关联？')) return;
+  const res = await apiAuthDelete('/duty-config', { type: 'group', id }, adminToken);
+  showToast(res.success ? '已删除' : (res.error || '操作失败'), !res.success);
+  if (res.success) loadDuty();
+}
+
+async function showAddDutySlotPerson(dutyGroupId) {
+  const allSlotsRes = await apiGet('/time-slots');
+  const allSlots = allSlotsRes.success ? (allSlotsRes.data || []) : [];
+
+  const groupsRes = await apiGet('/groups');
+  const allGroups = groupsRes.success ? (groupsRes.data || []) : [];
+
+  const configRes = await apiGet('/duty-config');
+  const dutyData = configRes.success ? (configRes.data || []) : [];
+
+  let dgInfo = null;
+  for (const dp of dutyData) {
+    for (const dg of dp.groups) {
+      if (dg.id === dutyGroupId) { dgInfo = dg; break; }
+    }
+    if (dgInfo) break;
+  }
+
+  let slotOptions = '<option value="">请选择时段</option>';
+  for (const s of allSlots) {
+    const g = allGroups.find(gr => gr.id === s.group_id);
+    slotOptions += `<option value="${s.id}">${esc(g ? g.name + ' - ' + s.time_range : s.time_range)}</option>`;
+  }
+
+  const formHtml = `
+    <div class="form-group">
+      <label>选择时段</label>
+      <select id="newSlotId_${dutyGroupId}" class="form-input">${slotOptions}</select>
+    </div>
+    <div class="form-group">
+      <label>人员名单（逗号/顿号/换行分隔）</label>
+      <textarea id="newPersons_${dutyGroupId}" class="form-input" rows="3" placeholder="贪狼，二哥，张三"></textarea>
+    </div>
+  `;
+
+  const existingForm = document.getElementById(`addSlotForm_${dutyGroupId}`);
+  if (existingForm.querySelector('.duty-slot-add-form')) return;
+
+  const div = document.createElement('div');
+  div.className = 'duty-slot-add-form';
+  div.innerHTML = formHtml + `<button class="btn btn-primary" style="margin-top:6px" onclick="addDutySlotPerson(${dutyGroupId})">确定</button>
+    <button class="btn btn-outline" style="margin-top:6px;margin-left:6px" onclick="this.parentElement.remove()">取消</button>`;
+  existingForm.appendChild(div);
+}
+
+async function addDutySlotPerson(dutyGroupId) {
+  const slotId = document.getElementById(`newSlotId_${dutyGroupId}`).value;
+  const persons = document.getElementById(`newPersons_${dutyGroupId}`).value.trim();
+  if (!slotId) return showToast('请选择时段', true);
+  if (!persons) return showToast('请输入人员名单', true);
+
+  const res = await apiAuthPost('/duty-config', { type: 'slot', duty_group_id: dutyGroupId, slot_id: parseInt(slotId), persons }, adminToken);
+  showToast(res.success ? '时段人员已配置' : (res.error || '操作失败'), !res.success);
+  if (res.success) loadDuty();
+}
+
+async function editDutySlotPerson(id, currentSlotId, currentPersons) {
+  const allSlotsRes = await apiGet('/time-slots');
+  const allSlots = allSlotsRes.success ? (allSlotsRes.data || []) : [];
+  const groupsRes = await apiGet('/groups');
+  const allGroups = groupsRes.success ? (groupsRes.data || []) : [];
+
+  let slotOptions = '<option value="">请选择时段</option>';
+  for (const s of allSlots) {
+    const g = allGroups.find(gr => gr.id === s.group_id);
+    slotOptions += `<option value="${s.id}" ${s.id == currentSlotId ? 'selected' : ''}>${esc(g ? g.name + ' - ' + s.time_range : s.time_range)}</option>`;
+  }
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.style.display = 'block';
+  overlay.innerHTML = `<div class="modal" style="max-width:400px">
+    <h3 style="color:#fff;margin:0 0 10px;font-size:15px">修改时段人员</h3>
+    <div class="form-group">
+      <label>选择时段</label>
+      <select id="editSlotId_${id}" class="form-input">${slotOptions}</select>
+    </div>
+    <div class="form-group">
+      <label>人员名单（逗号/顿号/换行分隔）</label>
+      <textarea id="editPersons_${id}" class="form-input" rows="3">${esc(currentPersons)}</textarea>
+    </div>
+    <button class="btn btn-primary" onclick="submitEditDutySlotPerson(${id})">保存</button>
+    <button class="btn btn-outline" style="margin-left:6px" onclick="this.closest('.modal-overlay').remove()">取消</button>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function submitEditDutySlotPerson(id) {
+  const slotId = document.getElementById(`editSlotId_${id}`).value;
+  const persons = document.getElementById(`editPersons_${id}`).value.trim();
+  if (!slotId) return showToast('请选择时段', true);
+  if (!persons) return showToast('请输入人员名单', true);
+
+  const res = await apiAuthPut('/duty-config', { type: 'slot', id, slot_id: parseInt(slotId), persons }, adminToken);
+  document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
+  showToast(res.success ? '已更新' : (res.error || '操作失败'), !res.success);
+  if (res.success) loadDuty();
+}
+
+async function deleteDutySlotPerson(id) {
+  if (!confirm('确定删除该时段人员配置？')) return;
+  const res = await apiAuthDelete('/duty-config', { type: 'slot', id }, adminToken);
+  showToast(res.success ? '已删除' : (res.error || '操作失败'), !res.success);
+  if (res.success) loadDuty();
+}
+
+async function handleAutoScore() {
+  const resultDiv = document.getElementById('autoScoreResult');
+  resultDiv.innerHTML = '<div class="loading">正在为今日值班人员加分...</div>';
+  const res = await apiAuthPost('/duty-config', { type: 'auto-score' }, adminToken);
+  if (res.success) {
+    resultDiv.innerHTML = `<div class="import-result success">${res.message}</div>`;
+    showToast(res.message);
+  } else {
+    resultDiv.innerHTML = `<div class="import-result error">${res.error}</div>`;
+    showToast(res.error, true);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {

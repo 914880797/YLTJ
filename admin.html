@@ -37,6 +37,7 @@
       <button class="admin-tab active" data-tab="groups" onclick="switchTab('groups')">分组管理</button>
       <button class="admin-tab" data-tab="import" onclick="switchTab('import')">数据导入</button>
       <button class="admin-tab" data-tab="announcements" onclick="switchTab('announcements')">公告管理</button>
+      <button class="admin-tab" data-tab="duty" onclick="switchTab('duty')">值班</button>
       <button class="admin-tab" data-tab="settings" onclick="switchTab('settings')">系统设置</button>
     </div>
 
@@ -87,6 +88,10 @@
 
     <div id="panel-announcements" class="admin-panel">
       <div id="announcementsList"></div>
+    </div>
+
+    <div id="panel-duty" class="admin-panel">
+      <div id="dutyList"></div>
     </div>
 
     <div id="panel-settings" class="admin-panel">

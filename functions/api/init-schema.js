@@ -67,6 +67,38 @@ export async function onRequestPost({ env }) {
       )`
     ).run();
 
+    await env.DB.prepare(
+      `CREATE TABLE IF NOT EXISTS duty_projects (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE,
+        order_index INTEGER NOT NULL DEFAULT 0
+      )`
+    ).run();
+
+    await env.DB.prepare(
+      `CREATE TABLE IF NOT EXISTS duty_groups (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        duty_project_id INTEGER NOT NULL,
+        group_id INTEGER NOT NULL,
+        order_index INTEGER NOT NULL DEFAULT 0,
+        FOREIGN KEY (duty_project_id) REFERENCES duty_projects(id) ON DELETE CASCADE,
+        FOREIGN KEY (group_id) REFERENCES groups(id),
+        UNIQUE(duty_project_id, group_id)
+      )`
+    ).run();
+
+    await env.DB.prepare(
+      `CREATE TABLE IF NOT EXISTS duty_slot_persons (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        duty_group_id INTEGER NOT NULL,
+        slot_id INTEGER NOT NULL,
+        persons TEXT NOT NULL,
+        order_index INTEGER NOT NULL DEFAULT 0,
+        FOREIGN KEY (duty_group_id) REFERENCES duty_groups(id) ON DELETE CASCADE,
+        FOREIGN KEY (slot_id) REFERENCES time_slots(id)
+      )`
+    ).run();
+
     const existing = await env.DB.prepare(
       `SELECT id FROM admin_users WHERE username = 'admin'`
     ).first();

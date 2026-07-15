@@ -50,3 +50,29 @@ CREATE TABLE IF NOT EXISTS admin_users (
   username TEXT NOT NULL UNIQUE,
   is_active INTEGER DEFAULT 1
 );
+
+CREATE TABLE IF NOT EXISTS duty_projects (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  order_index INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS duty_groups (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  duty_project_id INTEGER NOT NULL,
+  group_id INTEGER NOT NULL,
+  order_index INTEGER NOT NULL DEFAULT 0,
+  FOREIGN KEY (duty_project_id) REFERENCES duty_projects(id) ON DELETE CASCADE,
+  FOREIGN KEY (group_id) REFERENCES groups(id),
+  UNIQUE(duty_project_id, group_id)
+);
+
+CREATE TABLE IF NOT EXISTS duty_slot_persons (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  duty_group_id INTEGER NOT NULL,
+  slot_id INTEGER NOT NULL,
+  persons TEXT NOT NULL,
+  order_index INTEGER NOT NULL DEFAULT 0,
+  FOREIGN KEY (duty_group_id) REFERENCES duty_groups(id) ON DELETE CASCADE,
+  FOREIGN KEY (slot_id) REFERENCES time_slots(id)
+);
