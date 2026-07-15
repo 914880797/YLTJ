@@ -394,13 +394,38 @@ async function loadSettings() {
   const container = document.getElementById('settingsInfo');
   if (!container) return;
   const res = await apiGet('/settings');
-  if (!res.success) return;
-  container.innerHTML = `
+  const groupsRes = await apiGet('/groups');
+  const groups = groupsRes.success ? (groupsRes.data || []) : [];
+
+  let html = `
     <div class="card">
       <p>总记录数: <strong>${res.totalRecords || 0}</strong></p>
       <p>周期起始日期: ${res.cycleStartDate || '未设置'}</p>
     </div>
+    <div class="card" style="margin-top:12px">
+      <h3 style="color:#fff;margin-bottom:8px;font-size:15px">分组分值设置</h3>
+      <p style="color:#888;font-size:12px;margin-bottom:8px">每个分组的打卡位数据计数后乘以此分值</p>
   `;
+
+  for (const g of groups) {
+    html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <span style="color:#b0b0c0;font-size:13px;min-width:80px">${esc(g.name)}</span>
+      <input type="number" id="groupWeight_${g.id}" value="${g.score_weight || 1}" step="0.1" min="0" style="width:80px;padding:4px 8px;background:#1a1a2e;border:1px solid #333;border-radius:4px;color:#fff;font-size:13px">
+      <button class="btn btn-outline" style="font-size:11px;padding:3px 10px" onclick="updateGroupWeight(${g.id})">保存</button>
+    </div>`;
+  }
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+async function updateGroupWeight(groupId) {
+  const input = document.getElementById(`groupWeight_${groupId}`);
+  const weight = parseFloat(input.value);
+  if (isNaN(weight) || weight < 0) return showToast('请输入有效的分值', true);
+  const res = await apiAuthPut('/groups', { id: groupId, score_weight: weight }, adminToken);
+  showToast(res.success ? '分值已更新' : (res.error || '操作失败'), !res.success);
+  if (res.success) loadSettings();
 }
 
 function loadAll() {

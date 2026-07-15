@@ -2,6 +2,8 @@ import { jsonSuccess, jsonError } from './_shared.js';
 
 export async function onRequestGet({ request, env }) {
   try {
+    try { await env.DB.prepare(`ALTER TABLE groups ADD COLUMN score_weight REAL NOT NULL DEFAULT 1`).run(); } catch (e) {}
+
     const url = new URL(request.url);
     const name = url.searchParams.get('name');
 
@@ -21,7 +23,7 @@ export async function onRequestGet({ request, env }) {
 
     const { results: groupScores } = await env.DB.prepare(
       `SELECT sr.person_name, sr.group_id, g.name as group_name,
-              COUNT(DISTINCT sr.slot_id) as group_score
+              g.score_weight * COUNT(DISTINCT sr.slot_id) as group_score
        FROM score_records sr
        LEFT JOIN groups g ON sr.group_id = g.id
        ${where}

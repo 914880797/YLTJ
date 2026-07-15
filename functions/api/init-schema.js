@@ -6,7 +6,8 @@ export async function onRequestPost({ env }) {
       `CREATE TABLE IF NOT EXISTS groups (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL UNIQUE,
-        order_index INTEGER NOT NULL DEFAULT 0
+        order_index INTEGER NOT NULL DEFAULT 0,
+        score_weight REAL NOT NULL DEFAULT 1
       )`
     ).run();
 
@@ -77,6 +78,11 @@ export async function onRequestPost({ env }) {
     }
 
     const adminHash = await hashPassword('admin');
+
+    try {
+      await env.DB.prepare(`ALTER TABLE groups ADD COLUMN score_weight REAL NOT NULL DEFAULT 1`).run();
+    } catch (e) {}
+
     return jsonSuccess({ message: '数据库初始化成功', admin_token: adminHash });
   } catch (error) {
     return jsonError(error.message);

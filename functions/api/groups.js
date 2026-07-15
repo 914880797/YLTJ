@@ -16,7 +16,7 @@ export async function onRequestPost({ request, env }) {
   const isAdmin = await verifyAdmin(request, env);
   if (!isAdmin) return jsonError('未授权访问', 401);
   try {
-    const { name, order_index } = await request.json();
+    const { name, order_index, score_weight } = await request.json();
     if (!name || !name.trim()) return jsonError('分组名称不能为空', 400);
 
     const exists = await env.DB.prepare(
@@ -25,8 +25,8 @@ export async function onRequestPost({ request, env }) {
     if (exists) return jsonError('分组名称已存在', 400);
 
     await env.DB.prepare(
-      `INSERT INTO groups (name, order_index) VALUES (?, ?)`
-    ).bind(name.trim(), order_index || 0).run();
+      `INSERT INTO groups (name, order_index, score_weight) VALUES (?, ?, ?)`
+    ).bind(name.trim(), order_index || 0, score_weight !== undefined ? score_weight : 1).run();
     return jsonSuccess({ message: '分组创建成功' });
   } catch (error) {
     return jsonError(error.message);
@@ -37,7 +37,7 @@ export async function onRequestPut({ request, env }) {
   const isAdmin = await verifyAdmin(request, env);
   if (!isAdmin) return jsonError('未授权访问', 401);
   try {
-    const { id, name, order_index } = await request.json();
+    const { id, name, order_index, score_weight } = await request.json();
     if (!id) return jsonError('缺少分组 ID', 400);
 
     if (name && name.trim()) {
@@ -51,6 +51,10 @@ export async function onRequestPut({ request, env }) {
     if (order_index !== undefined) {
       await env.DB.prepare(`UPDATE groups SET order_index = ? WHERE id = ?`)
         .bind(order_index, id).run();
+    }
+    if (score_weight !== undefined) {
+      await env.DB.prepare(`UPDATE groups SET score_weight = ? WHERE id = ?`)
+        .bind(score_weight, id).run();
     }
     return jsonSuccess({ message: '分组更新成功' });
   } catch (error) {
