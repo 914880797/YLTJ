@@ -2,6 +2,8 @@ import { jsonSuccess, jsonError, verifyAdmin } from './_shared.js';
 
 export async function onRequestGet({ env }) {
   try {
+    try { await env.DB.prepare(`ALTER TABLE groups ADD COLUMN has_slots INTEGER NOT NULL DEFAULT 1`).run(); } catch (e) {}
+
     const { results } = await env.DB.prepare(
       `SELECT g.*, (SELECT COUNT(*) FROM time_slots WHERE group_id = g.id) as slot_count
        FROM groups g ORDER BY g.order_index ASC, g.id ASC`
