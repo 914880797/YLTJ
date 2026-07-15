@@ -70,7 +70,6 @@ CREATE TABLE IF NOT EXISTS duty_groups (
 CREATE TABLE IF NOT EXISTS duty_slot_persons (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   duty_group_id INTEGER NOT NULL,
-  time_range TEXT NOT NULL,
   persons TEXT NOT NULL,
   order_index INTEGER NOT NULL DEFAULT 0,
   FOREIGN KEY (duty_group_id) REFERENCES duty_groups(id) ON DELETE CASCADE

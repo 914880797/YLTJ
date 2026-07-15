@@ -141,24 +141,20 @@ async function updateDutyGroup(body, env) {
 }
 
 async function addDutySlotPerson(body, env) {
-  const { duty_group_id, time_range, persons, order_index } = body;
+  const { duty_group_id, persons, order_index } = body;
   if (!duty_group_id) return jsonError('缺少值班分组 ID', 400);
-  if (!time_range || !time_range.trim()) return jsonError('缺少时段范围', 400);
   if (!persons || !persons.trim()) return jsonError('缺少人员名单', 400);
 
   await env.DB.prepare(
-    `INSERT INTO duty_slot_persons (duty_group_id, time_range, persons, order_index) VALUES (?, ?, ?, ?)`
-  ).bind(duty_group_id, time_range.trim(), persons.trim(), order_index || 0).run();
+    `INSERT INTO duty_slot_persons (duty_group_id, persons, order_index) VALUES (?, ?, ?)`
+  ).bind(duty_group_id, persons.trim(), order_index || 0).run();
   return jsonSuccess({ message: '人员配置成功' });
 }
 
 async function updateDutySlotPerson(body, env) {
-  const { id, time_range, persons, order_index } = body;
+  const { id, persons, order_index } = body;
   if (!id) return jsonError('缺少配置 ID', 400);
 
-  if (time_range !== undefined && time_range.trim()) {
-    await env.DB.prepare(`UPDATE duty_slot_persons SET time_range = ? WHERE id = ?`).bind(time_range.trim(), id).run();
-  }
   if (persons !== undefined && persons.trim()) {
     await env.DB.prepare(`UPDATE duty_slot_persons SET persons = ? WHERE id = ?`).bind(persons.trim(), id).run();
   }

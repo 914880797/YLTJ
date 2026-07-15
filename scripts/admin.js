@@ -483,9 +483,8 @@ async function loadDuty() {
 
       for (const sp of (dg.slots || [])) {
         html += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:12px;color:#b0b0c0">
-          <span style="min-width:80px">${esc(sp.time_range || '')}</span>
           <span style="flex:1;color:#fff">${esc(sp.persons || '')}</span>
-          <button onclick="editDutySlotPerson(${sp.id},'${esc(sp.time_range || '')}','${esc(sp.persons || '')}')" style="font-size:10px;padding:2px 6px">编辑</button>
+          <button onclick="editDutySlotPerson(${sp.id},'${esc(sp.persons || '')}')" style="font-size:10px;padding:2px 6px">编辑</button>
           <button onclick="deleteDutySlotPerson(${sp.id})" class="btn-danger" style="font-size:10px;padding:2px 6px">删除</button>
         </div>`;
       }
@@ -646,10 +645,6 @@ async function deleteDutyGroup(id) {
 async function showAddDutySlotPerson(dutyGroupId) {
   const formHtml = `
     <div class="form-group">
-      <label>时段范围（如 08:00-11:00）</label>
-      <input type="text" id="newTimeRange_${dutyGroupId}" class="form-input" placeholder="08:00-11:00">
-    </div>
-    <div class="form-group">
       <label>人员名单（逗号/顿号/换行分隔）</label>
       <textarea id="newPersons_${dutyGroupId}" class="form-input" rows="3" placeholder="贪狼，二哥，张三"></textarea>
     </div>
@@ -666,26 +661,20 @@ async function showAddDutySlotPerson(dutyGroupId) {
 }
 
 async function addDutySlotPerson(dutyGroupId) {
-  const timeRange = document.getElementById(`newTimeRange_${dutyGroupId}`).value.trim();
   const persons = document.getElementById(`newPersons_${dutyGroupId}`).value.trim();
-  if (!timeRange) return showToast('请输入时段范围', true);
   if (!persons) return showToast('请输入人员名单', true);
 
-  const res = await apiAuthPost('/duty-config', { type: 'slot', duty_group_id: dutyGroupId, time_range: timeRange, persons }, adminToken);
-  showToast(res.success ? '时段人员已配置' : (res.error || '操作失败'), !res.success);
+  const res = await apiAuthPost('/duty-config', { type: 'slot', duty_group_id: dutyGroupId, persons }, adminToken);
+  showToast(res.success ? '人员已添加' : (res.error || '操作失败'), !res.success);
   if (res.success) loadDuty();
 }
 
-async function editDutySlotPerson(id, currentTimeRange, currentPersons) {
+async function editDutySlotPerson(id, currentPersons) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.style.display = 'block';
   overlay.innerHTML = `<div class="modal" style="max-width:400px">
-    <h3 style="color:#fff;margin:0 0 10px;font-size:15px">修改时段人员</h3>
-    <div class="form-group">
-      <label>时段范围（如 08:00-11:00）</label>
-      <input type="text" id="editTimeRange_${id}" class="form-input" value="${esc(currentTimeRange)}">
-    </div>
+    <h3 style="color:#fff;margin:0 0 10px;font-size:15px">修改人员</h3>
     <div class="form-group">
       <label>人员名单（逗号/顿号/换行分隔）</label>
       <textarea id="editPersons_${id}" class="form-input" rows="3">${esc(currentPersons)}</textarea>
@@ -697,19 +686,17 @@ async function editDutySlotPerson(id, currentTimeRange, currentPersons) {
 }
 
 async function submitEditDutySlotPerson(id) {
-  const timeRange = document.getElementById(`editTimeRange_${id}`).value.trim();
   const persons = document.getElementById(`editPersons_${id}`).value.trim();
-  if (!timeRange) return showToast('请输入时段范围', true);
   if (!persons) return showToast('请输入人员名单', true);
 
-  const res = await apiAuthPut('/duty-config', { type: 'slot', id, time_range: timeRange, persons }, adminToken);
+  const res = await apiAuthPut('/duty-config', { type: 'slot', id, persons }, adminToken);
   document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
   showToast(res.success ? '已更新' : (res.error || '操作失败'), !res.success);
   if (res.success) loadDuty();
 }
 
 async function deleteDutySlotPerson(id) {
-  if (!confirm('确定删除该时段人员配置？')) return;
+  if (!confirm('确定删除该人员配置？')) return;
   const res = await apiAuthDelete('/duty-config', { type: 'slot', id }, adminToken);
   showToast(res.success ? '已删除' : (res.error || '操作失败'), !res.success);
   if (res.success) loadDuty();
