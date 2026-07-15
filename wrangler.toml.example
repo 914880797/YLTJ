@@ -1,0 +1,12 @@
+name = "yltj"
+main = "functions/[[path]].js"
+compatibility_date = "2025-01-01"
+
+# D1 数据库绑定
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "yltj-db"
+# database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+# [vars]
+# SENTRY_DSN = "https://xxxxxxxxxxxxxxxx@sentry.io/xxxxxxx"

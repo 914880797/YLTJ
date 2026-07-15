@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f0f1a">
+  <title>历史记录</title>
+  <link rel="stylesheet" href="/styles/shared.css">
+  <script>window.SENTRY_DSN=window.SENTRY_DSN||'';window.SENTRY_ENV=window.SENTRY_ENV||'production';</script>
+  <script src="/utils/sentry.js"></script>
+  <script src="/utils/frontend-utils.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>历史记录</h1>
+    <div class="nav-row">
+      <a href="/" class="back-btn">首页</a>
+      <a href="/dashboard.html" class="back-btn">数据看板</a>
+      <a href="/export.html" class="back-btn">数据导出</a>
+      <a href="/admin.html" class="back-btn">管理后台</a>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;align-items:center">
+      <input type="text" id="filterName" class="form-input" placeholder="搜索姓名" style="flex:1;min-width:120px;margin-bottom:0">
+      <input type="date" id="filterStartDate" class="form-input" style="width:140px;margin-bottom:0">
+      <input type="date" id="filterEndDate" class="form-input" style="width:140px;margin-bottom:0">
+      <button id="btnList" class="btn btn-primary active" onclick="switchView('list')">列表</button>
+      <button id="btnCross" class="btn btn-primary" style="background:transparent;border:1px solid #4a4a6a;color:#b0b0c0" onclick="switchView('cross')">交叉表</button>
+    </div>
+
+    <div id="recordsContainer">
+      <div class="loading">加载中...</div>
+    </div>
+  </div>
+
+  <script src="/scripts/records.js"></script>
+</body>
+</html>

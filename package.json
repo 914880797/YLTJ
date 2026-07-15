@@ -1,0 +1,15 @@
+{
+  "name": "yltj",
+  "version": "1.0.0",
+  "private": true,
+  "description": "排行榜查询系统 - Cloudflare Pages + D1",
+  "scripts": {
+    "dev": "wrangler pages dev -- npm run start",
+    "start": "echo 'Use wrangler pages dev for local development'",
+    "deploy": "wrangler pages deploy",
+    "test": "node tests/_shared.test.js"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

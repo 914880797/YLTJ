@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0f0f1a">
+  <title>管理后台</title>
+  <link rel="stylesheet" href="/styles/shared.css">
+  <link rel="stylesheet" href="/styles/admin.css">
+  <script>window.SENTRY_DSN=window.SENTRY_DSN||'';window.SENTRY_ENV=window.SENTRY_ENV||'production';</script>
+  <script src="/utils/sentry.js"></script>
+  <script src="/utils/frontend-utils.js"></script>
+  <script src="/xlsx.full.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <div id="loginOverlay" class="login-overlay">
+      <div class="login-card">
+        <h2>管理员登录</h2>
+        <input type="text" id="adminUsername" placeholder="请输入管理员账号">
+        <input type="password" id="adminPassword" placeholder="请输入密码">
+        <button class="btn btn-primary login-btn" onclick="handleLogin()">立即登录</button>
+        <div style="margin-top:16px;text-align:center">
+          <a href="/" class="back-btn">返回首页</a>
+        </div>
+      </div>
+    </div>
+
+    <h1>管理后台</h1>
+    <div class="nav-row">
+      <a href="/" class="back-btn">首页</a>
+      <button class="btn btn-outline" onclick="logout()" style="font-size:11px">退出登录</button>
+    </div>
+
+    <div class="admin-tabs">
+      <button class="admin-tab active" data-tab="groups" onclick="switchTab('groups')">分组管理</button>
+      <button class="admin-tab" data-tab="import" onclick="switchTab('import')">数据导入</button>
+      <button class="admin-tab" data-tab="announcements" onclick="switchTab('announcements')">公告管理</button>
+      <button class="admin-tab" data-tab="settings" onclick="switchTab('settings')">系统设置</button>
+    </div>
+
+    <div id="panel-groups" class="admin-panel active">
+      <div id="groupsList"></div>
+    </div>
+
+    <div id="panel-import" class="admin-panel">
+      <div class="card">
+        <h3 style="color:#fff;margin-bottom:12px;font-size:15px">Excel 批量导入</h3>
+        <p style="color:#888;font-size:12px;margin-bottom:8px">支持列表格式（姓名/分组/时段/分值/日期）和矩阵格式（行=人员，列=分组-时段）</p>
+        <input type="file" id="importFile" accept=".xlsx,.xls" class="form-input" style="margin-bottom:8px">
+        <button class="btn btn-primary" onclick="handleImport()">开始导入</button>
+        <div id="importResult"></div>
+      </div>
+    </div>
+
+    <div id="panel-announcements" class="admin-panel">
+      <div id="announcementsList"></div>
+    </div>
+
+    <div id="panel-settings" class="admin-panel">
+      <div id="settingsInfo"></div>
+    </div>
+
+    <div id="slotManager" class="modal-overlay" style="display:none">
+      <div class="modal">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <h2 style="margin:0">时段管理: <span id="slotGroupName"></span></h2>
+          <button class="btn btn-outline" onclick="closeSlotManager()">关闭</button>
+        </div>
+        <input type="hidden" id="slotGroupId">
+        <div id="slotsList"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/scripts/admin.js"></script>
+</body>
+</html>

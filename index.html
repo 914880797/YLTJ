@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0f0f1a">
+  <title>排行榜</title>
+  <link rel="stylesheet" href="/styles/shared.css">
+  <script>window.SENTRY_DSN=window.SENTRY_DSN||'';window.SENTRY_ENV=window.SENTRY_ENV||'production';</script>
+  <script src="/utils/sentry.js"></script>
+  <script src="/utils/frontend-utils.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>排行榜</h1>
+    <div class="nav-row">
+      <a href="/" class="back-btn">首页</a>
+      <a href="/dashboard.html" class="back-btn">数据看板</a>
+      <a href="/records.html" class="back-btn">历史记录</a>
+      <a href="/export.html" class="back-btn">数据导出</a>
+      <a href="/admin.html" class="back-btn">管理后台</a>
+    </div>
+
+    <div id="announcementBar" class="announcement-bar" style="display:none"></div>
+
+    <input type="text" id="searchInput" class="search-box" placeholder="搜索姓名过滤排名...">
+
+    <div id="rankingList">
+      <div class="loading">加载中...</div>
+    </div>
+  </div>
+
+  <script src="/scripts/index.js"></script>
+</body>
+</html>

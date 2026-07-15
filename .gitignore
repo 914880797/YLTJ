@@ -1,0 +1,9 @@
+node_modules/
+wrangler.toml
+.env
+.venv/
+*.swp
+*.swo
+*~
+.DS_Store
+

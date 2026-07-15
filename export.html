@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f0f1a">
+  <title>数据导出</title>
+  <link rel="stylesheet" href="/styles/shared.css">
+  <script>window.SENTRY_DSN=window.SENTRY_DSN||'';window.SENTRY_ENV=window.SENTRY_ENV||'production';</script>
+  <script src="/utils/sentry.js"></script>
+  <script src="/utils/frontend-utils.js"></script>
+  <script src="/xlsx.full.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>数据导出</h1>
+    <div class="nav-row">
+      <a href="/" class="back-btn">首页</a>
+      <a href="/dashboard.html" class="back-btn">数据看板</a>
+      <a href="/records.html" class="back-btn">历史记录</a>
+      <a href="/admin.html" class="back-btn">管理后台</a>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+      <button class="btn btn-primary" onclick="exportRankings()">导出排名 Excel</button>
+      <button class="btn btn-success" onclick="exportRecords()">导出记录明细 Excel</button>
+      <input type="text" id="exportNameFilter" class="form-input" placeholder="按姓名筛选（可选）" style="width:160px;margin-bottom:0">
+    </div>
+
+    <div id="exportContent">
+      <div class="loading">加载中...</div>
+    </div>
+  </div>
+
+  <script src="/scripts/export.js"></script>
+</body>
+</html>
