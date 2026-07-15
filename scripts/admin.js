@@ -770,17 +770,7 @@ async function handleAutoScore() {
 
   let html = `<div class="modal" style="max-width:500px;max-height:70vh;overflow-y:auto">
     <h3 style="color:#fff;margin:0 0 8px;font-size:15px">加分确认 - ${date || '今天'}</h3>
-    <p style="color:#4caf50;font-size:13px;margin-bottom:8px">将加分 <strong>${preview.activeCount}</strong> 人</p>
-    <div style="max-height:200px;overflow-y:auto;margin-bottom:8px">
-      <table style="width:100%;font-size:12px">
-        <thead><tr><th style="text-align:left">姓名</th><th style="text-align:left">来源</th><th>分值</th></tr></thead>
-        <tbody>`;
-
-  for (const p of (preview.active || [])) {
-    html += `<tr><td style="color:#fff">${esc(p.name)}</td><td style="color:#888">${esc(p.source)}</td><td style="color:#4caf50;text-align:center">${p.score}</td></tr>`;
-  }
-
-  html += '</tbody></table></div>';
+    <p style="color:#4caf50;font-size:13px;margin-bottom:8px">将加分 <strong>${preview.activeCount}</strong> 人</p>`;
 
   if (preview.excluded && preview.excluded.length > 0) {
     html += `<div style="background:#2d1b1b;padding:8px;border-radius:4px;margin-bottom:8px">
