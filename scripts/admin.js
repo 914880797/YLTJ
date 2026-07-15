@@ -16,6 +16,10 @@ function esc(s) {
   return div.innerHTML;
 }
 
+function escAttr(s) {
+  return esc(s).replace(/'/g, "&#39;").replace(/"/g, '&quot;');
+}
+
 async function handleLogin() {
   const username = document.getElementById('adminUsername').value.trim();
   const password = document.getElementById('adminPassword').value;
@@ -776,9 +780,12 @@ async function handleAutoScore() {
     html += `<div style="background:#2d1b1b;padding:8px;border-radius:4px;margin-bottom:8px">
       <p style="color:#ef4444;font-size:13px;margin:0 0 4px">以下 <strong>${preview.excludedCount}</strong> 人因名前带"-"被排除（请假/停值）：</p>`;
     for (const p of preview.excluded) {
-      html += `<p style="color:#ef8f8f;font-size:12px;margin:2px 0">${esc(p.name)} (${esc(p.source)})</p>`;
+      html += `<p style="color:#ef8f8f;font-size:12px;margin:2px 0;display:flex;align-items:center;justify-content:space-between">
+        <span>${esc(p.name)} (${esc(p.source)})</span>
+        <button class="btn btn-sm" style="font-size:11px;padding:2px 8px" onclick="event.stopPropagation();removeExclusion(${p.duty_project_id},'${escAttr(p.name)}','${date}')">恢复</button>
+      </p>`;
     }
-    html += `<p style="color:#ef4444;font-size:11px;margin-top:6px">如需加分，请先在值班Tab中编辑人员名单，去掉"-"号。</p>
+    html += `<p style="color:#ef4444;font-size:11px;margin-top:6px">点击"恢复"去掉"-"号，或先在值班Tab中编辑人员名单。</p>
     </div>`;
   }
 
@@ -805,6 +812,16 @@ async function confirmAutoScore(date) {
   } else {
     resultDiv.innerHTML = `<div class="import-result error">${res.error}</div>`;
     showToast(res.error, true);
+  }
+}
+
+async function removeExclusion(dutyProjectId, name, date) {
+  const res = await apiAuthPost('/duty-config', { type: 'remove-exclusion', duty_project_id: dutyProjectId, name: name }, adminToken);
+  if (res.success) {
+    showToast(res.message);
+    handleAutoScore();
+  } else {
+    showToast(res.error || '操作失败', true);
   }
 }
 

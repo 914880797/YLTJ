@@ -52,7 +52,7 @@ export async function previewAutoScore(env, targetDate) {
         const key = `${realName}::${cfg.duty_project_id}`;
         if (!seenExcluded.has(key)) {
           seenExcluded.add(key);
-          excludedList.push({ name: realName, source: label });
+          excludedList.push({ name: realName, source: label, duty_project_id: cfg.duty_project_id });
         }
       } else {
         const key = `${name}::${cfg.duty_project_id}`;

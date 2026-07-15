@@ -74,6 +74,9 @@ export async function onRequestPost({ request, env }) {
       const result = await previewAutoScore(env, body.date);
       return jsonSuccess(result);
     }
+    if (type === 'remove-exclusion') {
+      return removeExclusion(body, env);
+    }
 
     return jsonError('未知操作类型', 400);
   } catch (error) {
@@ -170,4 +173,27 @@ async function updateDutySlotPerson(body, env) {
     await env.DB.prepare(`UPDATE duty_slot_persons SET order_index = ? WHERE id = ?`).bind(order_index, id).run();
   }
   return jsonSuccess({ message: '已更新' });
+}
+
+async function removeExclusion(body, env) {
+  const { duty_project_id, name } = body;
+  if (!duty_project_id || !name) return jsonError('缺少参数', 400);
+
+  const { results: rows } = await env.DB.prepare(
+    `SELECT dsp.id, dsp.persons
+     FROM duty_slot_persons dsp
+     LEFT JOIN duty_groups dg ON dsp.duty_group_id = dg.id
+     WHERE dg.duty_project_id = ? AND dsp.persons LIKE ?`
+  ).bind(duty_project_id, `%-${name}%`).all();
+
+  if (!rows || rows.length === 0) return jsonError('未找到该人员的排除记录', 404);
+
+  for (const row of rows) {
+    const parts = row.persons.split(/[,，、\n\r]+/).map(p => p.trim());
+    const updated = parts.map(p => p === `-${name}` ? name : p).join(', ');
+    await env.DB.prepare(`UPDATE duty_slot_persons SET persons = ? WHERE id = ?`)
+      .bind(updated, row.id).run();
+  }
+
+  return jsonSuccess({ message: `已将 ${name} 恢复为正常加分人员` });
 }
