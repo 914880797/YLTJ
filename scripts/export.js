@@ -21,13 +21,12 @@ async function loadExportPreview() {
     }
 
     let html = '<table><thead><tr>';
-    html += '<th>排名</th><th>姓名</th>';
+    html += '<th>姓名</th>';
     for (const gn of groupNames) html += `<th>${esc(gn)}</th>`;
     html += '<th>总分</th></tr></thead><tbody>';
 
     for (const row of data) {
       html += '<tr>';
-      html += `<td>${row.rank}</td>`;
       html += `<td>${esc(row.name)}</td>`;
       for (const gn of groupNames) html += `<td>${row.group_scores[gn] || 0}</td>`;
       html += `<td><strong>${row.total_score}</strong></td>`;
@@ -49,9 +48,9 @@ async function exportRankings() {
     const { results: rankings } = await apiGet('/rankings');
     const data = rankings?.data || [];
 
-    const header = ['排名', '姓名', ...groupNames, '总分'];
+    const header = ['姓名', ...groupNames, '总分'];
     const rows = data.map((row, idx) => {
-      const r = [row.rank, row.name];
+      const r = [row.name];
       for (const gn of groupNames) r.push(row.group_scores[gn] || 0);
       r.push(row.total_score);
       return r;
