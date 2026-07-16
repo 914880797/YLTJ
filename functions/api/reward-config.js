@@ -1,11 +1,10 @@
 import { jsonSuccess, jsonError, verifyAdmin } from './_shared.js';
 import { autoScoreReward, previewRewardScore } from './_reward-score.js';
+import { runMigrations } from './_migrate.js';
 
 export async function onRequestGet({ request, env }) {
   try {
-    try { await env.DB.prepare(`CREATE TABLE IF NOT EXISTS reward_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, bind_group_id INTEGER, order_index INTEGER NOT NULL DEFAULT 0)`).run(); } catch (e) {}
-    try { await env.DB.prepare(`CREATE TABLE IF NOT EXISTS reward_slot_persons (id INTEGER PRIMARY KEY AUTOINCREMENT, reward_project_id INTEGER NOT NULL, persons TEXT NOT NULL, order_index INTEGER NOT NULL DEFAULT 0)`).run(); } catch (e) {}
-    try { await env.DB.prepare(`ALTER TABLE reward_projects ADD COLUMN bind_group_id INTEGER`).run(); } catch (e) {}
+    await runMigrations(env);
 
     const url = new URL(request.url);
     const rewardProjectId = url.searchParams.get('reward_project_id');

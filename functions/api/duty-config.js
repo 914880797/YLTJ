@@ -1,9 +1,10 @@
 import { jsonSuccess, jsonError, verifyAdmin } from './_shared.js';
 import { autoScoreDuty, previewAutoScore } from './_duty-score.js';
+import { runMigrations } from './_migrate.js';
 
 export async function onRequestGet({ request, env }) {
   try {
-    try { await env.DB.prepare(`ALTER TABLE duty_projects ADD COLUMN bind_group_id INTEGER`).run(); } catch (e) {}
+    await runMigrations(env);
 
     const url = new URL(request.url);
     const dutyProjectId = url.searchParams.get('duty_project_id');

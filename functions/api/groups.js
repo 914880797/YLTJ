@@ -1,8 +1,9 @@
 import { jsonSuccess, jsonError, verifyAdmin } from './_shared.js';
+import { runMigrations } from './_migrate.js';
 
 export async function onRequestGet({ env }) {
   try {
-    try { await env.DB.prepare(`ALTER TABLE groups ADD COLUMN has_slots INTEGER NOT NULL DEFAULT 1`).run(); } catch (e) {}
+    await runMigrations(env);
 
     const { results } = await env.DB.prepare(
       `SELECT g.*, (SELECT COUNT(*) FROM time_slots WHERE group_id = g.id) as slot_count

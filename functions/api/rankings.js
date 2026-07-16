@@ -1,9 +1,9 @@
 import { jsonSuccess, jsonError } from './_shared.js';
+import { runMigrations } from './_migrate.js';
 
 export async function onRequestGet({ request, env }) {
   try {
-    try { await env.DB.prepare(`ALTER TABLE groups ADD COLUMN score_weight REAL NOT NULL DEFAULT 1`).run(); } catch (e) {}
-    try { await env.DB.prepare(`ALTER TABLE groups ADD COLUMN has_slots INTEGER NOT NULL DEFAULT 1`).run(); } catch (e) {}
+    await runMigrations(env);
 
     const url = new URL(request.url);
     const name = url.searchParams.get('name');
