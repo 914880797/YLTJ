@@ -203,7 +203,7 @@ async function removeExclusion(body, env) {
 }
 
 async function handleWarmupSmartImport(body, env) {
-  const { warmup_project_id, names, record_date } = body;
+  const { warmup_project_id, warmup_group_id, names, record_date } = body;
   if (!warmup_project_id) return jsonError('缺少预热项目 ID', 400);
   if (!names || !Array.isArray(names) || names.length === 0) return jsonError('缺少人员名单', 400);
 

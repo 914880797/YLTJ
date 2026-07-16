@@ -1121,6 +1121,8 @@ async function loadWarmup() {
     return;
   }
 
+  const configRes = await apiGet('/warmup-config');
+  const warmupData = configRes.success ? (configRes.data || []) : [];
   const projects = projectsRes.data || [];
 
   let html = '<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">';
@@ -1128,6 +1130,7 @@ async function loadWarmup() {
   html += '<button class="btn btn-primary" style="margin-bottom:12px" onclick="showAddWarmupProject()">添加预热项目</button>';
 
   for (const wp of projects) {
+    const wpd = warmupData.find(d => d.id === wp.id) || { groups: [] };
     const projectKey = `warmup_${wp.id}`;
 
     html += `<div class="duty-project card" style="margin-bottom:8px">
@@ -1142,21 +1145,41 @@ async function loadWarmup() {
           <button onclick="event.stopPropagation();deleteWarmupProject(${wp.id})" class="btn-danger" style="font-size:11px;padding:3px 8px">删除</button>
         </div>
       </div>
-      <div id="${projectKey}_body" data-warmup-project style="display:none;margin-top:8px;border-top:1px solid #333;padding-top:8px">
-        <p style="color:#888;font-size:12px;margin:0">此项目通过智能导入直接写入计分记录。</p>
-      </div></div>`;
+      <div id="${projectKey}_body" data-warmup-project style="display:none;margin-top:8px;border-top:1px solid #333;padding-top:8px">`;
+
+    for (const wg of wpd.groups) {
+      html += `<div class="duty-group-item" style="margin-bottom:6px;padding:8px;background:#1a1a2e;border-radius:4px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="color:#4a6cf7;font-weight:600;font-size:13px">${esc(wg.name || '未命名')}</span>
+          <div>
+            <button onclick="editWarmupGroup(${wg.id},'${esc(wg.name || '')}')" style="font-size:11px;padding:3px 8px">编辑</button>
+            <button onclick="deleteWarmupGroup(${wg.id})" class="btn-danger" style="font-size:11px;padding:3px 8px">删除</button>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    html += `<div style="margin-top:6px">
+      <button onclick="showAddWarmupGroup(${wp.id})" style="font-size:11px;padding:3px 8px">+ 添加分组</button>
+    </div></div></div>`;
   }
 
   html += '</div>';
 
   html += `<div class="card" style="flex:1;min-width:340px;">
     <h3 style="color:#fff;margin:0 0 12px;font-size:15px">智能导入</h3>
-    <p style="color:#888;font-size:12px;margin-bottom:12px">选择预热项目，粘贴人员名单直接导入计分</p>
+    <p style="color:#888;font-size:12px;margin-bottom:12px">选择预热项目和分组，粘贴人员名单直接导入计分</p>
     <div class="form-group">
       <label>选择预热项目</label>
-      <select id="warmupImportProject">
+      <select id="warmupImportProject" onchange="onWarmupProjectChange()">
         <option value="">请选择预热项目</option>
         ${projects.map(wp => `<option value="${wp.id}|${wp.bind_group_id||''}">${esc(wp.name)}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>选择分组</label>
+      <select id="warmupImportGroup">
+        <option value="">请先选择预热项目</option>
       </select>
     </div>
     <div class="form-group">
@@ -1190,14 +1213,48 @@ function toggleWarmupProject(key) {
   }
 }
 
+async function onWarmupProjectChange() {
+  const select = document.getElementById('warmupImportProject');
+  const groupSelect = document.getElementById('warmupImportGroup');
+  const val = select.value;
+
+  if (!val) {
+    groupSelect.innerHTML = '<option value="">请先选择预热项目</option>';
+    return;
+  }
+
+  const projectId = val.split('|')[0];
+  const res = await apiGet(`/warmup-config?warmup_project_id=${projectId}`);
+
+  if (!res.success || !res.data || res.data.length === 0) {
+    groupSelect.innerHTML = '<option value="">该项目暂无分组</option>';
+    return;
+  }
+
+  const project = res.data[0];
+  const groups = project.groups || [];
+
+  if (groups.length === 0) {
+    groupSelect.innerHTML = '<option value="">该项目暂无分组</option>';
+    return;
+  }
+
+  groupSelect.innerHTML = groups.map((g, i) =>
+    `<option value="${g.id}">${esc(g.name || `分组${i+1}`)}</option>`
+  ).join('');
+}
+
 async function handleWarmupSmartImport() {
   const select = document.getElementById('warmupImportProject');
   const val = select.value;
+  const groupSelect = document.getElementById('warmupImportGroup');
+  const warmupGroupId = groupSelect.value;
   const recordDate = document.getElementById('warmupImportDate').value || todayDateStr();
   const namesText = document.getElementById('warmupImportNames').value.trim();
   const resultDiv = document.getElementById('warmupImportResult');
 
   if (!val) return showToast('请选择预热项目', true);
+  if (!warmupGroupId) return showToast('请选择分组', true);
   if (!namesText) return showToast('请输入人员名单', true);
 
   const parts = val.split('|');
@@ -1214,6 +1271,7 @@ async function handleWarmupSmartImport() {
   const res = await apiAuthPost('/warmup-config', {
     type: 'smart-import',
     warmup_project_id: parseInt(projectId),
+    warmup_group_id: parseInt(warmupGroupId),
     names: names,
     record_date: recordDate
   }, adminToken);
@@ -1306,6 +1364,63 @@ async function submitEditWarmupProject(id) {
 async function deleteWarmupProject(id) {
   if (!confirm('确定删除该预热项目及其下所有关联？')) return;
   const res = await apiAuthDelete('/warmup-projects', { id }, adminToken);
+  showToast(res.success ? '已删除' : (res.error || '操作失败'), !res.success);
+  if (res.success) loadWarmup();
+}
+
+async function showAddWarmupGroup(wpId) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.style.display = 'block';
+  overlay.innerHTML = `<div class="modal" style="max-width:350px">
+    <h3 style="color:#fff;margin:0 0 10px;font-size:15px">添加预热分组</h3>
+    <div class="form-group">
+      <label>分组名称</label>
+      <input type="text" id="newWarmupGroupName" class="form-input" placeholder="如: 小组A">
+    </div>
+    <button class="btn btn-primary" onclick="addWarmupGroupFromModal(${wpId})">确定</button>
+    <button class="btn btn-outline" style="margin-left:6px" onclick="this.closest('.modal-overlay').remove()">取消</button>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function addWarmupGroupFromModal(wpId) {
+  const name = document.getElementById('newWarmupGroupName').value.trim();
+  if (!name) return showToast('请输入分组名称', true);
+  const res = await apiAuthPost('/warmup-config', { type: 'group', warmup_project_id: wpId, name }, adminToken);
+  document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
+  showToast(res.success ? '预热分组创建成功' : (res.error || '操作失败'), !res.success);
+  if (res.success) loadWarmup();
+}
+
+function editWarmupGroup(id, oldName) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.style.display = 'block';
+  overlay.innerHTML = `<div class="modal" style="max-width:350px">
+    <h3 style="color:#fff;margin:0 0 10px;font-size:15px">编辑预热分组</h3>
+    <div class="form-group">
+      <label>分组名称</label>
+      <input type="text" id="editWarmupGroupName" class="form-input" value="${esc(oldName)}">
+    </div>
+    <button class="btn btn-primary" onclick="submitEditWarmupGroup(${id})">保存</button>
+    <button class="btn btn-outline" style="margin-left:6px" onclick="this.closest('.modal-overlay').remove()">取消</button>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function submitEditWarmupGroup(id) {
+  const name = document.getElementById('editWarmupGroupName').value.trim();
+  if (!name) return showToast('请输入分组名称', true);
+  const res = await apiAuthPut('/warmup-config', { type: 'group', id, name }, adminToken);
+  document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
+  showToast(res.success ? '已更新' : (res.error || '操作失败'), !res.success);
+  if (res.success) loadWarmup();
+}
+
+async function deleteWarmupGroup(id) {
+  if (!confirm('确定删除该预热分组？')) return;
+  const res = await apiAuthDelete('/warmup-config', { type: 'group', id }, adminToken);
   showToast(res.success ? '已删除' : (res.error || '操作失败'), !res.success);
   if (res.success) loadWarmup();
 }
