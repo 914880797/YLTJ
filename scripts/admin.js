@@ -855,6 +855,7 @@ async function loadReward() {
         <div>
           <h3 style="color:#fff;font-size:14px;margin:0;display:inline">${esc(rp.name)}</h3>
           ${rp.bind_group_name ? `<span style="color:#888;font-size:11px;margin-left:8px">绑定: ${esc(rp.bind_group_name)}</span>` : ''}
+          <span style="color:#f7a44a;font-size:11px;margin-left:8px">系数: ${rp.score_weight || 1}</span>
         </div>
         <div>
           <button onclick="editRewardProject(${rp.id},'${esc(rp.name)}',${rp.bind_group_id||0})" style="font-size:11px;padding:3px 8px">编辑</button>
