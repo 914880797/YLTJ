@@ -1121,8 +1121,6 @@ async function loadWarmup() {
     return;
   }
 
-  const configRes = await apiGet('/warmup-config');
-  const warmupData = configRes.success ? (configRes.data || []) : [];
   const projects = projectsRes.data || [];
 
   let html = '<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">';
@@ -1130,49 +1128,23 @@ async function loadWarmup() {
   html += '<button class="btn btn-primary" style="margin-bottom:12px" onclick="showAddWarmupProject()">添加预热项目</button>';
 
   for (const wp of projects) {
-    const wpd = warmupData.find(d => d.id === wp.id) || { groups: [] };
     const projectKey = `warmup_${wp.id}`;
 
     html += `<div class="duty-project card" style="margin-bottom:8px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div style="cursor:pointer" onclick="toggleWarmupProject('${projectKey}')">
-          <span id="${projectKey}_arrow" style="color:#888;font-size:12px;margin-right:6px">&#9654;</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleWarmupProject('${projectKey}')">
+        <div>
+          <span id="${projectKey}_arrow" data-warmup-project style="color:#888;font-size:12px;margin-right:6px">&#9654;</span>
           <h3 style="color:#fff;font-size:14px;margin:0;display:inline">${esc(wp.name)}</h3>
-          ${wp.bind_group_name ? `<span style="color:#888;font-size:11px;margin-left:8px">绑定: ${esc(wp.bind_group_name)}</span>` : ''}
+          ${wp.bind_group_name ? `<span style="color:#888;font-size:11px;margin-left:8px">绑定: ${esc(wp.bind_group_name)}</span>` : '<span style="color:#ef4444;font-size:11px;margin-left:8px">未绑定</span>'}
         </div>
         <div>
           <button onclick="event.stopPropagation();editWarmupProject(${wp.id},'${esc(wp.name)}',${wp.bind_group_id||0})" style="font-size:11px;padding:3px 8px">编辑</button>
           <button onclick="event.stopPropagation();deleteWarmupProject(${wp.id})" class="btn-danger" style="font-size:11px;padding:3px 8px">删除</button>
         </div>
       </div>
-      <div id="${projectKey}_body" style="display:none;margin-top:8px;border-top:1px solid #333;padding-top:8px">`;
-
-    for (const wg of wpd.groups) {
-      html += `<div class="duty-group-item" style="margin-bottom:6px;padding:8px;background:#1a1a2e;border-radius:4px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <span style="color:#4a6cf7;font-weight:600;font-size:13px">${esc(wg.name || '未命名')}</span>
-          <div>
-            <button onclick="editWarmupGroup(${wg.id},'${esc(wg.name || '')}')" style="font-size:10px;padding:2px 6px">编辑</button>
-            <button onclick="deleteWarmupGroup(${wg.id})" class="btn-danger" style="font-size:10px;padding:2px 6px">删除</button>
-          </div>
-        </div>`;
-
-      for (const sp of (wg.slots || [])) {
-        html += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:12px;color:#b0b0c0">
-          <span style="flex:1;color:#fff">${esc(sp.persons || '')}</span>
-          <button onclick="editWarmupSlotPerson(${sp.id},'${esc(sp.persons || '')}')" style="font-size:10px;padding:2px 6px">编辑</button>
-          <button onclick="deleteWarmupSlotPerson(${sp.id})" class="btn-danger" style="font-size:10px;padding:2px 6px">删除</button>
-        </div>`;
-      }
-
-      html += `<div style="margin-top:4px" id="addWarmupSlotForm_${wg.id}">
-        <button onclick="showAddWarmupSlotPerson(${wg.id})" style="font-size:11px;padding:3px 8px">+ 添加人员</button>
+      <div id="${projectKey}_body" data-warmup-project style="display:none;margin-top:8px;border-top:1px solid #333;padding-top:8px">
+        <p style="color:#888;font-size:12px;margin:0">此项目通过智能导入直接写入计分记录。</p>
       </div></div>`;
-    }
-
-    html += `<div style="margin-top:6px">
-      <button onclick="showAddWarmupGroup(${wp.id})" style="font-size:11px;padding:3px 8px">+ 添加分组</button>
-    </div></div></div>`;
   }
 
   html += '</div>';
