@@ -903,6 +903,10 @@ async function showAddRewardProject() {
       <label>绑定主分组（用于加分）</label>
       <select id="newRewardBindGroupId" class="form-input">${groupOptions}</select>
     </div>
+    <div class="form-group">
+      <label>计分系数（每人计几分）</label>
+      <input type="number" id="newRewardScoreWeight" class="form-input" value="1" step="0.1" min="0">
+    </div>
     <button class="btn btn-primary" onclick="addRewardProjectFromModal()">确定</button>
     <button class="btn btn-outline" style="margin-left:6px" onclick="this.closest('.modal-overlay').remove()">取消</button>
   </div>`;
@@ -912,8 +916,9 @@ async function showAddRewardProject() {
 async function addRewardProjectFromModal() {
   const name = document.getElementById('newRewardProjectName').value.trim();
   const bindGroupId = document.getElementById('newRewardBindGroupId').value;
+  const scoreWeight = parseFloat(document.getElementById('newRewardScoreWeight').value) || 1;
   if (!name) return showToast('请输入项目名称', true);
-  const res = await apiAuthPost('/reward-projects', { name, bind_group_id: bindGroupId || null }, adminToken);
+  const res = await apiAuthPost('/reward-projects', { name, bind_group_id: bindGroupId || null, score_weight: scoreWeight }, adminToken);
   document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
   showToast(res.success ? '奖励项目创建成功' : (res.error || '操作失败'), !res.success);
   if (res.success) loadReward();
@@ -928,6 +933,10 @@ async function editRewardProject(id, oldName, oldBindGroupId) {
     groupOptions += `<option value="${g.id}" ${g.id == oldBindGroupId ? 'selected' : ''}>${esc(g.name)}</option>`;
   }
 
+  const rewardsRes = await apiGet('/reward-projects');
+  const reward = rewardsRes.success ? (rewardsRes.data || []).find(r => r.id === id) : null;
+  const currentWeight = reward ? (reward.score_weight || 1) : 1;
+
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.style.display = 'block';
@@ -941,6 +950,10 @@ async function editRewardProject(id, oldName, oldBindGroupId) {
       <label>绑定主分组（用于加分）</label>
       <select id="editRewardBindGroupId" class="form-input">${groupOptions}</select>
     </div>
+    <div class="form-group">
+      <label>计分系数（每人计几分）</label>
+      <input type="number" id="editRewardScoreWeight" class="form-input" value="${currentWeight}" step="0.1" min="0">
+    </div>
     <button class="btn btn-primary" onclick="submitEditRewardProject(${id})">保存</button>
     <button class="btn btn-outline" style="margin-left:6px" onclick="this.closest('.modal-overlay').remove()">取消</button>
   </div>`;
@@ -950,8 +963,9 @@ async function editRewardProject(id, oldName, oldBindGroupId) {
 async function submitEditRewardProject(id) {
   const name = document.getElementById('editRewardProjectName').value.trim();
   const bindGroupId = document.getElementById('editRewardBindGroupId').value;
+  const scoreWeight = parseFloat(document.getElementById('editRewardScoreWeight').value) || 1;
   if (!name) return showToast('请输入项目名称', true);
-  const res = await apiAuthPut('/reward-projects', { id, name, bind_group_id: bindGroupId || null }, adminToken);
+  const res = await apiAuthPut('/reward-projects', { id, name, bind_group_id: bindGroupId || null, score_weight: scoreWeight }, adminToken);
   document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
   showToast(res.success ? '已更新' : (res.error || '操作失败'), !res.success);
   if (res.success) loadReward();

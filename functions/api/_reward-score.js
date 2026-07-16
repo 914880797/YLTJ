@@ -14,8 +14,8 @@ export async function previewRewardScore(env, targetDate) {
 
   const { results: configs } = await env.DB.prepare(
     `SELECT rsp.persons, rsp.reward_project_id,
-            rp.name as reward_project_name,
-            rp.bind_group_id, g.name as bind_group_name, g.score_weight, g.has_slots
+            rp.name as reward_project_name, rp.score_weight as project_score_weight,
+            rp.bind_group_id, g.name as bind_group_name, g.score_weight as group_score_weight, g.has_slots
      FROM reward_slot_persons rsp
      LEFT JOIN reward_projects rp ON rsp.reward_project_id = rp.id
      LEFT JOIN groups g ON rp.bind_group_id = g.id
@@ -44,6 +44,7 @@ export async function previewRewardScore(env, targetDate) {
   for (const cfg of configs) {
     const rawNames = cfg.persons.split(/[,，、\n\r]+/).map(n => n.trim()).filter(n => n);
     const label = `${cfg.reward_project_name} > ${cfg.bind_group_name}`;
+    const scoreWeight = cfg.project_score_weight || cfg.group_score_weight || 1;
 
     for (const name of rawNames) {
       if (name.startsWith('-')) {
@@ -57,7 +58,7 @@ export async function previewRewardScore(env, targetDate) {
         const key = `${name}::${cfg.reward_project_id}`;
         if (!seenActive.has(key)) {
           seenActive.add(key);
-          activeList.push({ name, source: label, score: cfg.score_weight || 1 });
+          activeList.push({ name, source: label, score: scoreWeight });
         }
       }
     }
@@ -87,8 +88,8 @@ export async function autoScoreReward(env, targetDate) {
 
   const { results: configs } = await env.DB.prepare(
     `SELECT rsp.persons, rsp.reward_project_id,
-            rp.name as reward_project_name,
-            rp.bind_group_id, g.score_weight, g.has_slots
+            rp.name as reward_project_name, rp.score_weight as project_score_weight,
+            rp.bind_group_id, g.score_weight as group_score_weight, g.has_slots
      FROM reward_slot_persons rsp
      LEFT JOIN reward_projects rp ON rsp.reward_project_id = rp.id
      LEFT JOIN groups g ON rp.bind_group_id = g.id
@@ -116,7 +117,7 @@ export async function autoScoreReward(env, targetDate) {
 
   for (const cfg of (configs || [])) {
     const names = cfg.persons.split(/[,，、\n\r]+/).map(n => n.trim()).filter(n => n && !n.startsWith('-'));
-    const weight = cfg.score_weight || 1;
+    const weight = cfg.project_score_weight || cfg.group_score_weight || 1;
     const groupId = cfg.bind_group_id;
 
     const cacheKey = `${groupId}_reward_${cfg.reward_project_id}`;

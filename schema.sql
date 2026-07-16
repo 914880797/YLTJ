@@ -80,6 +80,7 @@ CREATE TABLE IF NOT EXISTS reward_projects (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL UNIQUE,
   bind_group_id INTEGER,
+  score_weight REAL NOT NULL DEFAULT 1,
   order_index INTEGER NOT NULL DEFAULT 0,
   FOREIGN KEY (bind_group_id) REFERENCES groups(id) ON DELETE SET NULL
 );

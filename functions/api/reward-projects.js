@@ -22,7 +22,7 @@ export async function onRequestPost({ request, env }) {
   const isAdmin = await verifyAdmin(request, env);
   if (!isAdmin) return jsonError('未授权访问', 401);
   try {
-    const { name, bind_group_id, order_index } = await request.json();
+    const { name, bind_group_id, order_index, score_weight } = await request.json();
     if (!name || !name.trim()) return jsonError('奖励项目名称不能为空', 400);
 
     const exists = await env.DB.prepare(
@@ -31,8 +31,8 @@ export async function onRequestPost({ request, env }) {
     if (exists) return jsonError('奖励项目名称已存在', 400);
 
     await env.DB.prepare(
-      `INSERT INTO reward_projects (name, bind_group_id, order_index) VALUES (?, ?, ?)`
-    ).bind(name.trim(), bind_group_id || null, order_index || 0).run();
+      `INSERT INTO reward_projects (name, bind_group_id, score_weight, order_index) VALUES (?, ?, ?, ?)`
+    ).bind(name.trim(), bind_group_id || null, score_weight || 1, order_index || 0).run();
     return jsonSuccess({ message: '奖励项目创建成功' });
   } catch (error) {
     return jsonError(error.message);
@@ -43,7 +43,7 @@ export async function onRequestPut({ request, env }) {
   const isAdmin = await verifyAdmin(request, env);
   if (!isAdmin) return jsonError('未授权访问', 401);
   try {
-    const { id, name, bind_group_id, order_index } = await request.json();
+    const { id, name, bind_group_id, order_index, score_weight } = await request.json();
     if (!id) return jsonError('缺少奖励项目 ID', 400);
 
     if (name && name.trim()) {
@@ -61,6 +61,10 @@ export async function onRequestPut({ request, env }) {
     if (bind_group_id !== undefined) {
       await env.DB.prepare(`UPDATE reward_projects SET bind_group_id = ? WHERE id = ?`)
         .bind(bind_group_id || null, id).run();
+    }
+    if (score_weight !== undefined) {
+      await env.DB.prepare(`UPDATE reward_projects SET score_weight = ? WHERE id = ?`)
+        .bind(score_weight, id).run();
     }
     return jsonSuccess({ message: '奖励项目更新成功' });
   } catch (error) {
