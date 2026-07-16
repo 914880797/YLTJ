@@ -84,18 +84,10 @@ CREATE TABLE IF NOT EXISTS reward_projects (
   FOREIGN KEY (bind_group_id) REFERENCES groups(id) ON DELETE SET NULL
 );
 
-CREATE TABLE IF NOT EXISTS reward_groups (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  reward_project_id INTEGER NOT NULL,
-  name TEXT NOT NULL,
-  order_index INTEGER NOT NULL DEFAULT 0,
-  FOREIGN KEY (reward_project_id) REFERENCES reward_projects(id) ON DELETE CASCADE
-);
-
 CREATE TABLE IF NOT EXISTS reward_slot_persons (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  reward_group_id INTEGER NOT NULL,
+  reward_project_id INTEGER NOT NULL,
   persons TEXT NOT NULL,
   order_index INTEGER NOT NULL DEFAULT 0,
-  FOREIGN KEY (reward_group_id) REFERENCES reward_groups(id) ON DELETE CASCADE
+  FOREIGN KEY (reward_project_id) REFERENCES reward_projects(id) ON DELETE CASCADE
 );

@@ -848,7 +848,7 @@ async function loadReward() {
   const projects = projectsRes.data || [];
 
   for (const rp of projects) {
-    const rpd = rewardData.find(d => d.id === rp.id) || { groups: [] };
+    const rpd = rewardData.find(d => d.id === rp.id) || { persons: [] };
 
     html += `<div class="duty-project card" style="margin-bottom:8px">
       <div style="display:flex;justify-content:space-between;align-items:center">
@@ -863,31 +863,16 @@ async function loadReward() {
       </div>
       <hr style="border-color:#333;margin:8px 0">`;
 
-    for (const rg of rpd.groups) {
-      html += `<div class="duty-group-item" style="margin-bottom:6px;padding:8px;background:#1a1a2e;border-radius:4px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <span style="color:#f7a44a;font-weight:600;font-size:13px">${esc(rg.name || '未命名')}</span>
-          <div>
-            <button onclick="editRewardGroup(${rg.id},'${esc(rg.name || '')}')" style="font-size:10px;padding:2px 6px">编辑</button>
-            <button onclick="deleteRewardGroup(${rg.id})" class="btn-danger" style="font-size:10px;padding:2px 6px">删除</button>
-          </div>
-        </div>`;
-
-      for (const sp of (rg.slots || [])) {
-        html += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:12px;color:#b0b0c0">
-          <span style="flex:1;color:#fff">${esc(sp.persons || '')}</span>
-          <button onclick="editRewardSlotPerson(${sp.id},'${esc(sp.persons || '')}')" style="font-size:10px;padding:2px 6px">编辑</button>
-          <button onclick="deleteRewardSlotPerson(${sp.id})" class="btn-danger" style="font-size:10px;padding:2px 6px">删除</button>
-        </div>`;
-      }
-
-      html += `<div style="margin-top:4px" id="addRewardSlotForm_${rg.id}">
-        <button onclick="showAddRewardSlotPerson(${rg.id})" style="font-size:11px;padding:3px 8px">+ 添加人员</button>
-      </div></div>`;
+    for (const sp of (rpd.persons || [])) {
+      html += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:12px;color:#b0b0c0">
+        <span style="flex:1;color:#fff">${esc(sp.persons || '')}</span>
+        <button onclick="editRewardSlotPerson(${sp.id},'${esc(sp.persons || '')}')" style="font-size:10px;padding:2px 6px">编辑</button>
+        <button onclick="deleteRewardSlotPerson(${sp.id})" class="btn-danger" style="font-size:10px;padding:2px 6px">删除</button>
+      </div>`;
     }
 
-    html += `<div style="margin-top:6px">
-      <button onclick="showAddRewardGroup(${rp.id})" style="font-size:11px;padding:3px 8px">+ 添加分组</button>
+    html += `<div style="margin-top:6px" id="addRewardSlotForm_${rp.id}">
+      <button onclick="showAddRewardSlotPerson(${rp.id})" style="font-size:11px;padding:3px 8px">+ 添加人员</button>
     </div></div>`;
   }
 
@@ -979,86 +964,29 @@ async function deleteRewardProject(id) {
   if (res.success) loadReward();
 }
 
-async function showAddRewardGroup(rewardProjectId) {
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.style.display = 'block';
-  overlay.innerHTML = `<div class="modal" style="max-width:350px">
-    <h3 style="color:#fff;margin:0 0 10px;font-size:15px">添加奖励分组</h3>
-    <div class="form-group">
-      <label>分组名称</label>
-      <input type="text" id="newRewardGroupName" class="form-input" placeholder="如: 分组A">
-    </div>
-    <button class="btn btn-primary" onclick="addRewardGroupFromModal(${rewardProjectId})">确定</button>
-    <button class="btn btn-outline" style="margin-left:6px" onclick="this.closest('.modal-overlay').remove()">取消</button>
-  </div>`;
-  document.body.appendChild(overlay);
-}
-
-async function addRewardGroupFromModal(rewardProjectId) {
-  const name = document.getElementById('newRewardGroupName').value.trim();
-  if (!name) return showToast('请输入分组名称', true);
-  const res = await apiAuthPost('/reward-config', { type: 'group', reward_project_id: rewardProjectId, name }, adminToken);
-  document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
-  showToast(res.success ? '奖励分组已创建' : (res.error || '操作失败'), !res.success);
-  if (res.success) loadReward();
-}
-
-async function editRewardGroup(id, currentName) {
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.style.display = 'block';
-  overlay.innerHTML = `<div class="modal" style="max-width:350px">
-    <h3 style="color:#fff;margin:0 0 10px;font-size:15px">编辑奖励分组</h3>
-    <div class="form-group">
-      <label>分组名称</label>
-      <input type="text" id="editRewardGroupName" class="form-input" value="${esc(currentName)}">
-    </div>
-    <button class="btn btn-primary" onclick="submitEditRewardGroup(${id})">保存</button>
-    <button class="btn btn-outline" style="margin-left:6px" onclick="this.closest('.modal-overlay').remove()">取消</button>
-  </div>`;
-  document.body.appendChild(overlay);
-}
-
-async function submitEditRewardGroup(id) {
-  const name = document.getElementById('editRewardGroupName').value.trim();
-  if (!name) return showToast('请输入分组名称', true);
-  const res = await apiAuthPut('/reward-config', { type: 'group', id, name }, adminToken);
-  document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
-  showToast(res.success ? '已更新' : (res.error || '操作失败'), !res.success);
-  if (res.success) loadReward();
-}
-
-async function deleteRewardGroup(id) {
-  if (!confirm('确定删除该分组关联？')) return;
-  const res = await apiAuthDelete('/reward-config', { type: 'group', id }, adminToken);
-  showToast(res.success ? '已删除' : (res.error || '操作失败'), !res.success);
-  if (res.success) loadReward();
-}
-
-async function showAddRewardSlotPerson(rewardGroupId) {
+async function showAddRewardSlotPerson(rewardProjectId) {
   const formHtml = `
     <div class="form-group">
       <label>人员名单（逗号/顿号/换行分隔，名前加 - 排除：-张三）</label>
-      <textarea id="newRewardPersons_${rewardGroupId}" class="form-input" rows="3" placeholder="贪狼，二哥，-张三"></textarea>
+      <textarea id="newRewardPersons_${rewardProjectId}" class="form-input" rows="3" placeholder="贪狼，二哥，-张三"></textarea>
     </div>
   `;
 
-  const existingForm = document.getElementById(`addRewardSlotForm_${rewardGroupId}`);
+  const existingForm = document.getElementById(`addRewardSlotForm_${rewardProjectId}`);
   if (existingForm.querySelector('.reward-slot-add-form')) return;
 
   const div = document.createElement('div');
   div.className = 'reward-slot-add-form';
-  div.innerHTML = formHtml + `<button class="btn btn-primary" style="margin-top:6px" onclick="addRewardSlotPerson(${rewardGroupId})">确定</button>
+  div.innerHTML = formHtml + `<button class="btn btn-primary" style="margin-top:6px" onclick="addRewardSlotPerson(${rewardProjectId})">确定</button>
     <button class="btn btn-outline" style="margin-top:6px;margin-left:6px" onclick="this.parentElement.remove()">取消</button>`;
   existingForm.appendChild(div);
 }
 
-async function addRewardSlotPerson(rewardGroupId) {
-  const persons = document.getElementById(`newRewardPersons_${rewardGroupId}`).value.trim();
+async function addRewardSlotPerson(rewardProjectId) {
+  const persons = document.getElementById(`newRewardPersons_${rewardProjectId}`).value.trim();
   if (!persons) return showToast('请输入人员名单', true);
 
-  const res = await apiAuthPost('/reward-config', { type: 'slot', reward_group_id: rewardGroupId, persons }, adminToken);
+  const res = await apiAuthPost('/reward-config', { type: 'slot', reward_project_id: rewardProjectId, persons }, adminToken);
   showToast(res.success ? '人员已添加' : (res.error || '操作失败'), !res.success);
   if (res.success) loadReward();
 }

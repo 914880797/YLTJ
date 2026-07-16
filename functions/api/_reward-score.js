@@ -13,12 +13,11 @@ export async function previewRewardScore(env, targetDate) {
   }
 
   const { results: configs } = await env.DB.prepare(
-    `SELECT rsp.persons, rsp.reward_group_id, rg.name as reward_group_name,
-            rp.id as reward_project_id, rp.name as reward_project_name,
+    `SELECT rsp.persons, rsp.reward_project_id,
+            rp.name as reward_project_name,
             rp.bind_group_id, g.name as bind_group_name, g.score_weight, g.has_slots
      FROM reward_slot_persons rsp
-     LEFT JOIN reward_groups rg ON rsp.reward_group_id = rg.id
-     LEFT JOIN reward_projects rp ON rg.reward_project_id = rp.id
+     LEFT JOIN reward_projects rp ON rsp.reward_project_id = rp.id
      LEFT JOIN groups g ON rp.bind_group_id = g.id
      WHERE rp.bind_group_id IS NOT NULL`
   ).all();
@@ -44,7 +43,7 @@ export async function previewRewardScore(env, targetDate) {
 
   for (const cfg of configs) {
     const rawNames = cfg.persons.split(/[,，、\n\r]+/).map(n => n.trim()).filter(n => n);
-    const label = `${cfg.reward_project_name} > ${cfg.reward_group_name} > ${cfg.bind_group_name}`;
+    const label = `${cfg.reward_project_name} > ${cfg.bind_group_name}`;
 
     for (const name of rawNames) {
       if (name.startsWith('-')) {
@@ -87,12 +86,11 @@ export async function autoScoreReward(env, targetDate) {
   const now = formatBeijingNow();
 
   const { results: configs } = await env.DB.prepare(
-    `SELECT rsp.persons, rsp.reward_group_id, rg.name as reward_group_name,
-            rp.id as reward_project_id, rp.name as reward_project_name,
+    `SELECT rsp.persons, rsp.reward_project_id,
+            rp.name as reward_project_name,
             rp.bind_group_id, g.score_weight, g.has_slots
      FROM reward_slot_persons rsp
-     LEFT JOIN reward_groups rg ON rsp.reward_group_id = rg.id
-     LEFT JOIN reward_projects rp ON rg.reward_project_id = rp.id
+     LEFT JOIN reward_projects rp ON rsp.reward_project_id = rp.id
      LEFT JOIN groups g ON rp.bind_group_id = g.id
      WHERE rp.bind_group_id IS NOT NULL`
   ).all();
@@ -121,10 +119,10 @@ export async function autoScoreReward(env, targetDate) {
     const weight = cfg.score_weight || 1;
     const groupId = cfg.bind_group_id;
 
-    const cacheKey = `${groupId}_rewardgroup_${cfg.reward_group_id}`;
+    const cacheKey = `${groupId}_reward_${cfg.reward_project_id}`;
     if (!slotCache[cacheKey]) {
       if (cfg.has_slots === 0) {
-        const slotName = `${cfg.reward_project_name}_${cfg.reward_group_name}`;
+        const slotName = cfg.reward_project_name;
         const existing = await env.DB.prepare(
           `SELECT id FROM time_slots WHERE group_id = ? AND name = ?`
         ).bind(groupId, slotName).first();
