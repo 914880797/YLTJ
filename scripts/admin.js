@@ -1125,25 +1125,27 @@ async function loadWarmup() {
   const warmupData = configRes.success ? (configRes.data || []) : [];
   const projects = projectsRes.data || [];
 
-  let html = '<div style="display:flex;gap:16px;flex-wrap:wrap">';
+  let html = '<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">';
   html += '<div style="flex:1;min-width:360px">';
   html += '<button class="btn btn-primary" style="margin-bottom:12px" onclick="showAddWarmupProject()">添加预热项目</button>';
 
   for (const wp of projects) {
     const wpd = warmupData.find(d => d.id === wp.id) || { groups: [] };
+    const projectKey = `warmup_${wp.id}`;
 
     html += `<div class="duty-project card" style="margin-bottom:8px">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div>
+        <div style="cursor:pointer" onclick="toggleWarmupProject('${projectKey}')">
+          <span id="${projectKey}_arrow" style="color:#888;font-size:12px;margin-right:6px">&#9654;</span>
           <h3 style="color:#fff;font-size:14px;margin:0;display:inline">${esc(wp.name)}</h3>
           ${wp.bind_group_name ? `<span style="color:#888;font-size:11px;margin-left:8px">绑定: ${esc(wp.bind_group_name)}</span>` : ''}
         </div>
         <div>
-          <button onclick="editWarmupProject(${wp.id},'${esc(wp.name)}',${wp.bind_group_id||0})" style="font-size:11px;padding:3px 8px">编辑</button>
-          <button onclick="deleteWarmupProject(${wp.id})" class="btn-danger" style="font-size:11px;padding:3px 8px">删除</button>
+          <button onclick="event.stopPropagation();editWarmupProject(${wp.id},'${esc(wp.name)}',${wp.bind_group_id||0})" style="font-size:11px;padding:3px 8px">编辑</button>
+          <button onclick="event.stopPropagation();deleteWarmupProject(${wp.id})" class="btn-danger" style="font-size:11px;padding:3px 8px">删除</button>
         </div>
       </div>
-      <hr style="border-color:#333;margin:8px 0">`;
+      <div id="${projectKey}_body" style="display:none;margin-top:8px;border-top:1px solid #333;padding-top:8px">`;
 
     for (const wg of wpd.groups) {
       html += `<div class="duty-group-item" style="margin-bottom:6px;padding:8px;background:#1a1a2e;border-radius:4px">
@@ -1170,31 +1172,20 @@ async function loadWarmup() {
 
     html += `<div style="margin-top:6px">
       <button onclick="showAddWarmupGroup(${wp.id})" style="font-size:11px;padding:3px 8px">+ 添加分组</button>
-    </div></div>`;
+    </div></div></div>`;
   }
 
   html += '</div>';
-
-  let groupOptions = '<option value="">全部时段</option>';
-  if (projects.length > 0) {
-    for (const wp of projects) {
-      groupOptions += `<option value="${wp.id}">${esc(wp.name)}</option>`;
-    }
-  }
 
   html += `<div class="card" style="flex:1;min-width:340px;">
     <h3 style="color:#fff;margin:0 0 12px;font-size:15px">智能导入</h3>
     <p style="color:#888;font-size:12px;margin-bottom:12px">选择预热项目，粘贴人员名单直接导入计分</p>
     <div class="form-group">
       <label>选择预热项目</label>
-      <select id="warmupImportProject" onchange="onWarmupImportProjectChange()">
+      <select id="warmupImportProject">
         <option value="">请选择预热项目</option>
-        ${projects.map(wp => `<option value="${wp.id}|${wp.bind_group_id||''}|${wp.bind_group_name||''}">${esc(wp.name)}</option>`).join('')}
+        ${projects.map(wp => `<option value="${wp.id}|${wp.bind_group_id||''}">${esc(wp.name)}</option>`).join('')}
       </select>
-    </div>
-    <div class="form-group">
-      <label>分值</label>
-      <input type="number" id="warmupImportScore" class="form-input" value="1" step="any">
     </div>
     <div class="form-group">
       <label>日期</label>
@@ -1234,7 +1225,6 @@ async function onWarmupImportProjectChange() {
 async function handleWarmupSmartImport() {
   const select = document.getElementById('warmupImportProject');
   const val = select.value;
-  const score = parseFloat(document.getElementById('warmupImportScore').value) || 0;
   const recordDate = document.getElementById('warmupImportDate').value || todayDateStr();
   const namesText = document.getElementById('warmupImportNames').value.trim();
   const resultDiv = document.getElementById('warmupImportResult');
@@ -1257,7 +1247,6 @@ async function handleWarmupSmartImport() {
     type: 'smart-import',
     warmup_project_id: parseInt(projectId),
     names: names,
-    score: score,
     record_date: recordDate
   }, adminToken);
 
@@ -1267,6 +1256,18 @@ async function handleWarmupSmartImport() {
   } else {
     resultDiv.innerHTML = `<div class="import-result error">${res.error}</div>`;
     showToast(res.error, true);
+  }
+}
+
+function toggleWarmupProject(key) {
+  const body = document.getElementById(key + '_body');
+  const arrow = document.getElementById(key + '_arrow');
+  if (body.style.display === 'none') {
+    body.style.display = 'block';
+    arrow.textContent = '\u25BC';
+  } else {
+    body.style.display = 'none';
+    arrow.textContent = '\u25B6';
   }
 }
 

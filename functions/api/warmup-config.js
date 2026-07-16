@@ -203,7 +203,7 @@ async function removeExclusion(body, env) {
 }
 
 async function handleWarmupSmartImport(body, env) {
-  const { warmup_project_id, names, score, record_date } = body;
+  const { warmup_project_id, names, record_date } = body;
   if (!warmup_project_id) return jsonError('缺少预热项目 ID', 400);
   if (!names || !Array.isArray(names) || names.length === 0) return jsonError('缺少人员名单', 400);
 
@@ -217,7 +217,7 @@ async function handleWarmupSmartImport(body, env) {
   if (!project || !project.bind_group_id) return jsonError('预热项目未绑定主分组', 400);
 
   const groupId = project.bind_group_id;
-  const weight = score || project.group_score_weight || 1;
+  const weight = project.group_score_weight || 1;
   const now = formatBeijingNow();
 
   let slotIds = [];
