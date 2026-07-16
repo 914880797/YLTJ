@@ -1191,7 +1191,7 @@ async function loadWarmup() {
     </div>
     <div class="form-group">
       <label>粘贴人员名单（逗号/顿号/换行分隔）</label>
-      <textarea id="warmupImportNames" class="form-input" rows="4" style="resize:vertical;max-height:40vh" placeholder="张三，李四&#10;或每行一个名字&#10;支持逗号、顿号、换行分隔"></textarea>
+      <textarea id="warmupImportNames" class="form-input" rows="4" style="resize:vertical;max-height:35vh" placeholder="张三，李四&#10;或每行一个名字&#10;支持逗号、顿号、换行分隔"></textarea>
     </div>
     <button class="btn btn-primary" onclick="handleWarmupSmartImport()">开始导入</button>
     <div id="warmupImportResult" style="margin-top:8px"></div>
