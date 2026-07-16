@@ -1125,9 +1125,10 @@ async function loadWarmup() {
   const warmupData = configRes.success ? (configRes.data || []) : [];
   const projects = projectsRes.data || [];
 
-  let html = '<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">';
-  html += '<div style="flex:1;min-width:360px">';
+  let html = '';
   html += '<button class="btn btn-primary" style="margin-bottom:12px" onclick="showAddWarmupProject()">添加预热项目</button>';
+  html += '<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">';
+  html += '<div style="flex:1;min-width:360px">';
 
   for (const wp of projects) {
     const wpd = warmupData.find(d => d.id === wp.id) || { groups: [] };
@@ -1169,18 +1170,20 @@ async function loadWarmup() {
   html += `<div class="card" style="flex:1;min-width:340px;">
     <h3 style="color:#fff;margin:0 0 12px;font-size:15px">智能导入</h3>
     <p style="color:#888;font-size:12px;margin-bottom:12px">选择预热项目和分组，粘贴人员名单直接导入计分</p>
-    <div class="form-group">
-      <label>选择预热项目</label>
-      <select id="warmupImportProject" onchange="onWarmupProjectChange()">
-        <option value="">请选择预热项目</option>
-        ${projects.map(wp => `<option value="${wp.id}|${wp.bind_group_id||''}">${esc(wp.name)}</option>`).join('')}
-      </select>
-    </div>
-    <div class="form-group">
-      <label>选择分组</label>
-      <select id="warmupImportGroup">
-        <option value="">请先选择预热项目</option>
-      </select>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <div class="form-group" style="flex:1;margin-bottom:0">
+        <label>选择预热项目</label>
+        <select id="warmupImportProject" onchange="onWarmupProjectChange()">
+          <option value="">请选择预热项目</option>
+          ${projects.map(wp => `<option value="${wp.id}|${wp.bind_group_id||''}">${esc(wp.name)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group" style="flex:1;margin-bottom:0">
+        <label>选择分组</label>
+        <select id="warmupImportGroup">
+          <option value="">请先选择预热项目</option>
+        </select>
+      </div>
     </div>
     <div class="form-group">
       <label>日期</label>

@@ -12,7 +12,7 @@ export async function onRequestGet({ request, env }) {
     let projectWhere = '';
     const projectArgs = [];
     if (warmupProjectId) {
-      projectWhere = 'WHERE dp.id = ?';
+      projectWhere = 'WHERE id = ?';
       projectArgs.push(warmupProjectId);
     }
 
