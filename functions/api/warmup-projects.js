@@ -1,0 +1,80 @@
+import { jsonSuccess, jsonError, verifyAdmin } from './_shared.js';
+
+export async function onRequestGet({ env }) {
+  try {
+    const { results } = await env.DB.prepare(
+      `SELECT dp.*, g.name as bind_group_name,
+              (SELECT COUNT(*) FROM warmup_groups WHERE warmup_project_id = dp.id) as group_count
+       FROM warmup_projects dp
+       LEFT JOIN groups g ON dp.bind_group_id = g.id
+       ORDER BY dp.order_index ASC, dp.id ASC`
+    ).all();
+    return jsonSuccess({ data: results || [] });
+  } catch (error) {
+    return jsonError(error.message);
+  }
+}
+
+export async function onRequestPost({ request, env }) {
+  const isAdmin = await verifyAdmin(request, env);
+  if (!isAdmin) return jsonError('未授权访问', 401);
+  try {
+    const { name, bind_group_id, order_index } = await request.json();
+    if (!name || !name.trim()) return jsonError('预热项目名称不能为空', 400);
+
+    const exists = await env.DB.prepare(
+      `SELECT id FROM warmup_projects WHERE name = ?`
+    ).bind(name.trim()).first();
+    if (exists) return jsonError('预热项目名称已存在', 400);
+
+    await env.DB.prepare(
+      `INSERT INTO warmup_projects (name, bind_group_id, order_index) VALUES (?, ?, ?)`
+    ).bind(name.trim(), bind_group_id || null, order_index || 0).run();
+    return jsonSuccess({ message: '预热项目创建成功' });
+  } catch (error) {
+    return jsonError(error.message);
+  }
+}
+
+export async function onRequestPut({ request, env }) {
+  const isAdmin = await verifyAdmin(request, env);
+  if (!isAdmin) return jsonError('未授权访问', 401);
+  try {
+    const { id, name, bind_group_id, order_index } = await request.json();
+    if (!id) return jsonError('缺少预热项目 ID', 400);
+
+    if (name && name.trim()) {
+      const exists = await env.DB.prepare(
+        `SELECT id FROM warmup_projects WHERE name = ? AND id != ?`
+      ).bind(name.trim(), id).first();
+      if (exists) return jsonError('预热项目名称已存在', 400);
+      await env.DB.prepare(`UPDATE warmup_projects SET name = ? WHERE id = ?`)
+        .bind(name.trim(), id).run();
+    }
+    if (order_index !== undefined) {
+      await env.DB.prepare(`UPDATE warmup_projects SET order_index = ? WHERE id = ?`)
+        .bind(order_index, id).run();
+    }
+    if (bind_group_id !== undefined) {
+      await env.DB.prepare(`UPDATE warmup_projects SET bind_group_id = ? WHERE id = ?`)
+        .bind(bind_group_id || null, id).run();
+    }
+    return jsonSuccess({ message: '预热项目更新成功' });
+  } catch (error) {
+    return jsonError(error.message);
+  }
+}
+
+export async function onRequestDelete({ request, env }) {
+  const isAdmin = await verifyAdmin(request, env);
+  if (!isAdmin) return jsonError('未授权访问', 401);
+  try {
+    const { id } = await request.json();
+    if (!id) return jsonError('缺少预热项目 ID', 400);
+
+    await env.DB.prepare(`DELETE FROM warmup_projects WHERE id = ?`).bind(id).run();
+    return jsonSuccess({ message: '预热项目已删除' });
+  } catch (error) {
+    return jsonError(error.message);
+  }
+}

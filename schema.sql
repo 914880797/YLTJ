@@ -92,3 +92,27 @@ CREATE TABLE IF NOT EXISTS reward_slot_persons (
   order_index INTEGER NOT NULL DEFAULT 0,
   FOREIGN KEY (reward_project_id) REFERENCES reward_projects(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS warmup_projects (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  bind_group_id INTEGER,
+  order_index INTEGER NOT NULL DEFAULT 0,
+  FOREIGN KEY (bind_group_id) REFERENCES groups(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS warmup_groups (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  warmup_project_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  order_index INTEGER NOT NULL DEFAULT 0,
+  FOREIGN KEY (warmup_project_id) REFERENCES warmup_projects(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS warmup_slot_persons (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  warmup_group_id INTEGER NOT NULL,
+  persons TEXT NOT NULL,
+  order_index INTEGER NOT NULL DEFAULT 0,
+  FOREIGN KEY (warmup_group_id) REFERENCES warmup_groups(id) ON DELETE CASCADE
+);
