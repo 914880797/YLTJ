@@ -1204,21 +1204,17 @@ async function loadWarmup() {
   document.getElementById('warmupImportDate').value = todayDateStr();
 }
 
-async function onWarmupImportProjectChange() {
-  const select = document.getElementById('warmupImportProject');
-  const val = select.value;
-  if (!val) { document.getElementById('warmupImportScore').value = '1'; return; }
-  const parts = val.split('|');
-  const projectId = parts[0];
-  const bindGroupId = parts[1];
-  if (bindGroupId) {
-    const groupsRes = await apiGet('/groups');
-    if (groupsRes.success) {
-      const group = (groupsRes.data || []).find(g => g.id == bindGroupId);
-      if (group) {
-        document.getElementById('warmupImportScore').value = group.score_weight || 1;
-      }
-    }
+function toggleWarmupProject(key) {
+  const body = document.getElementById(key + '_body');
+  const arrow = document.getElementById(key + '_arrow');
+  const isOpen = body.style.display !== 'none';
+
+  document.querySelectorAll('[id$="_body"][data-warmup-project]').forEach(b => { b.style.display = 'none'; });
+  document.querySelectorAll('[id$="_arrow"][data-warmup-project]').forEach(a => { a.textContent = '\u25B6'; });
+
+  if (!isOpen) {
+    body.style.display = 'block';
+    arrow.textContent = '\u25BC';
   }
 }
 
@@ -1256,18 +1252,6 @@ async function handleWarmupSmartImport() {
   } else {
     resultDiv.innerHTML = `<div class="import-result error">${res.error}</div>`;
     showToast(res.error, true);
-  }
-}
-
-function toggleWarmupProject(key) {
-  const body = document.getElementById(key + '_body');
-  const arrow = document.getElementById(key + '_arrow');
-  if (body.style.display === 'none') {
-    body.style.display = 'block';
-    arrow.textContent = '\u25BC';
-  } else {
-    body.style.display = 'none';
-    arrow.textContent = '\u25B6';
   }
 }
 
@@ -1352,193 +1336,6 @@ async function deleteWarmupProject(id) {
   const res = await apiAuthDelete('/warmup-projects', { id }, adminToken);
   showToast(res.success ? '已删除' : (res.error || '操作失败'), !res.success);
   if (res.success) loadWarmup();
-}
-
-async function showAddWarmupGroup(warmupProjectId) {
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.style.display = 'block';
-  overlay.innerHTML = `<div class="modal" style="max-width:350px">
-    <h3 style="color:#fff;margin:0 0 10px;font-size:15px">添加预热分组</h3>
-    <div class="form-group">
-      <label>分组名称</label>
-      <input type="text" id="newWarmupGroupName" class="form-input" placeholder="如: 分组A">
-    </div>
-    <button class="btn btn-primary" onclick="addWarmupGroupFromModal(${warmupProjectId})">确定</button>
-    <button class="btn btn-outline" style="margin-left:6px" onclick="this.closest('.modal-overlay').remove()">取消</button>
-  </div>`;
-  document.body.appendChild(overlay);
-}
-
-async function addWarmupGroupFromModal(warmupProjectId) {
-  const name = document.getElementById('newWarmupGroupName').value.trim();
-  if (!name) return showToast('请输入分组名称', true);
-  const res = await apiAuthPost('/warmup-config', { type: 'group', warmup_project_id: warmupProjectId, name }, adminToken);
-  document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
-  showToast(res.success ? '预热分组已创建' : (res.error || '操作失败'), !res.success);
-  if (res.success) loadWarmup();
-}
-
-async function editWarmupGroup(id, currentName) {
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.style.display = 'block';
-  overlay.innerHTML = `<div class="modal" style="max-width:350px">
-    <h3 style="color:#fff;margin:0 0 10px;font-size:15px">编辑预热分组</h3>
-    <div class="form-group">
-      <label>分组名称</label>
-      <input type="text" id="editWarmupGroupName" class="form-input" value="${esc(currentName)}">
-    </div>
-    <button class="btn btn-primary" onclick="submitEditWarmupGroup(${id})">保存</button>
-    <button class="btn btn-outline" style="margin-left:6px" onclick="this.closest('.modal-overlay').remove()">取消</button>
-  </div>`;
-  document.body.appendChild(overlay);
-}
-
-async function submitEditWarmupGroup(id) {
-  const name = document.getElementById('editWarmupGroupName').value.trim();
-  if (!name) return showToast('请输入分组名称', true);
-  const res = await apiAuthPut('/warmup-config', { type: 'group', id, name }, adminToken);
-  document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
-  showToast(res.success ? '已更新' : (res.error || '操作失败'), !res.success);
-  if (res.success) loadWarmup();
-}
-
-async function deleteWarmupGroup(id) {
-  if (!confirm('确定删除该分组关联？')) return;
-  const res = await apiAuthDelete('/warmup-config', { type: 'group', id }, adminToken);
-  showToast(res.success ? '已删除' : (res.error || '操作失败'), !res.success);
-  if (res.success) loadWarmup();
-}
-
-async function showAddWarmupSlotPerson(warmupGroupId) {
-  const formHtml = `
-    <div class="form-group">
-      <label>人员名单（逗号/顿号/换行分隔，名前加 - 排除：-张三）</label>
-      <textarea id="newWarmupPersons_${warmupGroupId}" class="form-input" rows="3" placeholder="贪狼，二哥，-张三"></textarea>
-    </div>
-  `;
-
-  const existingForm = document.getElementById(`addWarmupSlotForm_${warmupGroupId}`);
-  if (existingForm.querySelector('.warmup-slot-add-form')) return;
-
-  const div = document.createElement('div');
-  div.className = 'warmup-slot-add-form';
-  div.innerHTML = formHtml + `<button class="btn btn-primary" style="margin-top:6px" onclick="addWarmupSlotPerson(${warmupGroupId})">确定</button>
-    <button class="btn btn-outline" style="margin-top:6px;margin-left:6px" onclick="this.parentElement.remove()">取消</button>`;
-  existingForm.appendChild(div);
-}
-
-async function addWarmupSlotPerson(warmupGroupId) {
-  const persons = document.getElementById(`newWarmupPersons_${warmupGroupId}`).value.trim();
-  if (!persons) return showToast('请输入人员名单', true);
-
-  const res = await apiAuthPost('/warmup-config', { type: 'slot', warmup_group_id: warmupGroupId, persons }, adminToken);
-  showToast(res.success ? '人员已添加' : (res.error || '操作失败'), !res.success);
-  if (res.success) loadWarmup();
-}
-
-async function editWarmupSlotPerson(id, currentPersons) {
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.style.display = 'block';
-  overlay.innerHTML = `<div class="modal" style="max-width:400px">
-    <h3 style="color:#fff;margin:0 0 10px;font-size:15px">修改人员</h3>
-    <div class="form-group">
-      <label>人员名单（逗号/顿号/换行分隔，名前加 - 排除：-张三）</label>
-      <textarea id="editWarmupPersons_${id}" class="form-input" rows="3">${esc(currentPersons)}</textarea>
-    </div>
-    <button class="btn btn-primary" onclick="submitEditWarmupSlotPerson(${id})">保存</button>
-    <button class="btn btn-outline" style="margin-left:6px" onclick="this.closest('.modal-overlay').remove()">取消</button>
-  </div>`;
-  document.body.appendChild(overlay);
-}
-
-async function submitEditWarmupSlotPerson(id) {
-  const persons = document.getElementById(`editWarmupPersons_${id}`).value.trim();
-  if (!persons) return showToast('请输入人员名单', true);
-
-  const res = await apiAuthPut('/warmup-config', { type: 'slot', id, persons }, adminToken);
-  document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
-  showToast(res.success ? '已更新' : (res.error || '操作失败'), !res.success);
-  if (res.success) loadWarmup();
-}
-
-async function deleteWarmupSlotPerson(id) {
-  if (!confirm('确定删除该人员配置？')) return;
-  const res = await apiAuthDelete('/warmup-config', { type: 'slot', id }, adminToken);
-  showToast(res.success ? '已删除' : (res.error || '操作失败'), !res.success);
-  if (res.success) loadWarmup();
-}
-
-async function handleWarmupAutoScore() {
-  const resultDiv = document.getElementById('warmupAutoScoreResult');
-  const dateInput = document.getElementById('warmupAutoScoreDate');
-  const date = dateInput ? dateInput.value : '';
-  resultDiv.innerHTML = '<div class="loading">正在分析预热人员...</div>';
-
-  const preview = await apiAuthPost('/warmup-config', { type: 'auto-score-preview', date: date || undefined }, adminToken);
-  if (!preview.success) {
-    resultDiv.innerHTML = `<div class="import-result error">${preview.error}</div>`;
-    return;
-  }
-
-  if (!preview.active || preview.active.length === 0) {
-    resultDiv.innerHTML = `<div class="import-result error">${preview.message || '无人员在班，无法加分'}</div>`;
-    return;
-  }
-
-  let html = `<div class="modal" style="max-width:500px;max-height:70vh;overflow-y:auto">
-    <h3 style="color:#fff;margin:0 0 8px;font-size:15px">预热加分确认 - ${date || '今天'}</h3>
-    <p style="color:#4caf50;font-size:13px;margin-bottom:8px">将加分 <strong>${preview.activeCount}</strong> 人</p>`;
-
-  if (preview.excluded && preview.excluded.length > 0) {
-    html += `<div style="background:#2d1b1b;padding:8px;border-radius:4px;margin-bottom:8px">
-      <p style="color:#ef4444;font-size:13px;margin:0 0 4px">以下 <strong>${preview.excludedCount}</strong> 人因名前带"-"被排除（请假/停值）：</p>`;
-    for (const p of preview.excluded) {
-      html += `<p style="color:#ef8f8f;font-size:12px;margin:2px 0;display:flex;align-items:center;justify-content:space-between">
-        <span>${esc(p.name)} (${esc(p.source)})</span>
-        <button class="btn btn-sm" style="font-size:11px;padding:2px 8px" onclick="event.stopPropagation();removeWarmupExclusion(${p.warmup_project_id},'${escAttr(p.name)}','${date}')">恢复</button>
-      </p>`;
-    }
-    html += `<p style="color:#ef4444;font-size:11px;margin-top:6px">点击"恢复"去掉"-"号，或先在预热Tab中编辑人员名单。</p>
-    </div>`;
-  }
-
-  html += `<button class="btn btn-primary" onclick="confirmWarmupAutoScore('${date}')">确认加分</button>
-    <button class="btn btn-outline" style="margin-left:6px" onclick="this.closest('.modal-overlay').remove()">取消</button>
-  </div>`;
-
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.style.display = 'block';
-  overlay.innerHTML = html;
-  document.body.appendChild(overlay);
-  resultDiv.innerHTML = '';
-}
-
-async function confirmWarmupAutoScore(date) {
-  document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
-  const resultDiv = document.getElementById('warmupAutoScoreResult');
-  resultDiv.innerHTML = '<div class="loading">正在加分...</div>';
-  const res = await apiAuthPost('/warmup-config', { type: 'auto-score', date: date || undefined }, adminToken);
-  if (res.success) {
-    resultDiv.innerHTML = `<div class="import-result success">${res.message}</div>`;
-    showToast(res.message);
-  } else {
-    resultDiv.innerHTML = `<div class="import-result error">${res.error}</div>`;
-    showToast(res.error, true);
-  }
-}
-
-async function removeWarmupExclusion(warmupProjectId, name, date) {
-  const res = await apiAuthPost('/warmup-config', { type: 'remove-exclusion', warmup_project_id: warmupProjectId, name: name }, adminToken);
-  if (res.success) {
-    showToast(res.message);
-    handleWarmupAutoScore();
-  } else {
-    showToast(res.error || '操作失败', true);
-  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
