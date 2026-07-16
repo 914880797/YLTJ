@@ -1,4 +1,4 @@
-import { jsonSuccess, jsonError, verifyAdmin } from './_shared.js';
+import { jsonSuccess, jsonError, verifyAdmin, formatBeijingNow } from './_shared.js';
 import { autoScoreWarmup, previewAutoScore } from './_warmup-score.js';
 import { runMigrations } from './_migrate.js';
 
@@ -76,7 +76,10 @@ export async function onRequestPost({ request, env }) {
       return jsonSuccess(result);
     }
     if (type === 'remove-exclusion') {
-      return removeExclusion(body, env);
+      return removeWarmupExclusion(body, env);
+    }
+    if (type === 'smart-import') {
+      return handleWarmupSmartImport(body, env);
     }
 
     return jsonError('未知操作类型', 400);
@@ -197,4 +200,77 @@ async function removeExclusion(body, env) {
   }
 
   return jsonSuccess({ message: `已将 ${name} 恢复为正常加分人员` });
+}
+
+async function handleWarmupSmartImport(body, env) {
+  const { warmup_project_id, names, score, record_date } = body;
+  if (!warmup_project_id) return jsonError('缺少预热项目 ID', 400);
+  if (!names || !Array.isArray(names) || names.length === 0) return jsonError('缺少人员名单', 400);
+
+  const project = await env.DB.prepare(
+    `SELECT wp.*, g.has_slots, g.score_weight as group_score_weight
+     FROM warmup_projects wp
+     LEFT JOIN groups g ON wp.bind_group_id = g.id
+     WHERE wp.id = ?`
+  ).bind(warmup_project_id).first();
+
+  if (!project || !project.bind_group_id) return jsonError('预热项目未绑定主分组', 400);
+
+  const groupId = project.bind_group_id;
+  const weight = score || project.group_score_weight || 1;
+  const now = formatBeijingNow();
+
+  let slotIds = [];
+  if (project.has_slots === 0) {
+    let slot = await env.DB.prepare(
+      `SELECT id FROM time_slots WHERE group_id = ? AND name = ?`
+    ).bind(groupId, project.name).first();
+    if (!slot) {
+      await env.DB.prepare(
+        `INSERT INTO time_slots (group_id, name, time_range, order_index) VALUES (?, ?, '全天', 0)`
+      ).bind(groupId, project.name).run();
+      slot = await env.DB.prepare(
+        `SELECT id FROM time_slots WHERE group_id = ? AND name = ?`
+      ).bind(groupId, project.name).first();
+    }
+    if (slot) slotIds = [slot.id];
+  } else {
+    const { results: slots } = await env.DB.prepare(
+      `SELECT id FROM time_slots WHERE group_id = ?`
+    ).bind(groupId).all();
+    slotIds = (slots || []).map(s => s.id);
+  }
+
+  if (slotIds.length === 0) return jsonError('未找到可用时段', 400);
+
+  let imported = 0;
+  const errors = [];
+  const batch = [];
+
+  for (const name of names) {
+    for (const slotId of slotIds) {
+      const exists = await env.DB.prepare(
+        `SELECT id FROM score_records WHERE person_name = ? AND group_id = ? AND slot_id = ? AND record_date = ?`
+      ).bind(name, groupId, slotId, record_date).first();
+      if (exists) continue;
+
+      batch.push(
+        env.DB.prepare(
+          `INSERT INTO score_records (person_name, group_id, slot_id, score, record_date, created_at)
+           VALUES (?, ?, ?, ?, ?, ?)`
+        ).bind(name, groupId, slotId, weight, record_date, now)
+      );
+      imported++;
+    }
+  }
+
+  if (batch.length > 0) {
+    await env.DB.batch(batch);
+  }
+
+  return jsonSuccess({
+    message: `成功导入 ${imported} 条记录`,
+    imported,
+    errors: errors.length > 0 ? errors : undefined
+  });
 }

@@ -1123,13 +1123,11 @@ async function loadWarmup() {
 
   const configRes = await apiGet('/warmup-config');
   const warmupData = configRes.success ? (configRes.data || []) : [];
-
-  let html = '<button class="btn btn-primary" style="margin-bottom:12px" onclick="showAddWarmupProject()">添加预热项目</button>';
-  html += '<button class="btn btn-outline" style="margin-bottom:12px;margin-left:6px" onclick="handleWarmupAutoScore()">一键加分</button>';
-  html += '<input type="date" id="warmupAutoScoreDate" class="form-input" style="width:140px;margin-bottom:12px;margin-left:6px;display:inline-block">';
-  html += '<div id="warmupAutoScoreResult" style="margin-bottom:8px"></div>';
-
   const projects = projectsRes.data || [];
+
+  let html = '<div style="display:flex;gap:16px;flex-wrap:wrap">';
+  html += '<div style="flex:1;min-width:360px">';
+  html += '<button class="btn btn-primary" style="margin-bottom:12px" onclick="showAddWarmupProject()">添加预热项目</button>';
 
   for (const wp of projects) {
     const wpd = warmupData.find(d => d.id === wp.id) || { groups: [] };
@@ -1175,9 +1173,101 @@ async function loadWarmup() {
     </div></div>`;
   }
 
+  html += '</div>';
+
+  let groupOptions = '<option value="">全部时段</option>';
+  if (projects.length > 0) {
+    for (const wp of projects) {
+      groupOptions += `<option value="${wp.id}">${esc(wp.name)}</option>`;
+    }
+  }
+
+  html += `<div class="card" style="flex:1;min-width:340px;">
+    <h3 style="color:#fff;margin:0 0 12px;font-size:15px">智能导入</h3>
+    <p style="color:#888;font-size:12px;margin-bottom:12px">选择预热项目，粘贴人员名单直接导入计分</p>
+    <div class="form-group">
+      <label>选择预热项目</label>
+      <select id="warmupImportProject" onchange="onWarmupImportProjectChange()">
+        <option value="">请选择预热项目</option>
+        ${projects.map(wp => `<option value="${wp.id}|${wp.bind_group_id||''}|${wp.bind_group_name||''}">${esc(wp.name)}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>分值</label>
+      <input type="number" id="warmupImportScore" class="form-input" value="1" step="any">
+    </div>
+    <div class="form-group">
+      <label>日期</label>
+      <input type="date" id="warmupImportDate" class="form-input">
+    </div>
+    <div class="form-group">
+      <label>粘贴人员名单（逗号/顿号/换行分隔）</label>
+      <textarea id="warmupImportNames" class="form-input" rows="4" placeholder="张三，李四&#10;或每行一个名字&#10;支持逗号、顿号、换行分隔"></textarea>
+    </div>
+    <button class="btn btn-primary" onclick="handleWarmupSmartImport()">开始导入</button>
+    <div id="warmupImportResult" style="margin-top:8px"></div>
+  </div>`;
+
+  html += '</div>';
   container.innerHTML = html;
-  const dateInput = document.getElementById('warmupAutoScoreDate');
-  if (dateInput) dateInput.value = todayDateStr();
+  document.getElementById('warmupImportDate').value = todayDateStr();
+}
+
+async function onWarmupImportProjectChange() {
+  const select = document.getElementById('warmupImportProject');
+  const val = select.value;
+  if (!val) { document.getElementById('warmupImportScore').value = '1'; return; }
+  const parts = val.split('|');
+  const projectId = parts[0];
+  const bindGroupId = parts[1];
+  if (bindGroupId) {
+    const groupsRes = await apiGet('/groups');
+    if (groupsRes.success) {
+      const group = (groupsRes.data || []).find(g => g.id == bindGroupId);
+      if (group) {
+        document.getElementById('warmupImportScore').value = group.score_weight || 1;
+      }
+    }
+  }
+}
+
+async function handleWarmupSmartImport() {
+  const select = document.getElementById('warmupImportProject');
+  const val = select.value;
+  const score = parseFloat(document.getElementById('warmupImportScore').value) || 0;
+  const recordDate = document.getElementById('warmupImportDate').value || todayDateStr();
+  const namesText = document.getElementById('warmupImportNames').value.trim();
+  const resultDiv = document.getElementById('warmupImportResult');
+
+  if (!val) return showToast('请选择预热项目', true);
+  if (!namesText) return showToast('请输入人员名单', true);
+
+  const parts = val.split('|');
+  const projectId = parts[0];
+  const bindGroupId = parts[1];
+
+  if (!bindGroupId) { resultDiv.innerHTML = '<div class="import-result error">该预热项目未绑定主分组</div>'; return; }
+
+  const names = namesText.split(/[,，、\n\r]+/).map(n => n.trim()).filter(n => n && !n.startsWith('-'));
+  if (names.length === 0) { resultDiv.innerHTML = '<div class="import-result error">未识别到有效姓名</div>'; return; }
+
+  resultDiv.innerHTML = `<div class="loading">正在导入 ${names.length} 人...</div>`;
+
+  const res = await apiAuthPost('/warmup-config', {
+    type: 'smart-import',
+    warmup_project_id: parseInt(projectId),
+    names: names,
+    score: score,
+    record_date: recordDate
+  }, adminToken);
+
+  if (res.success) {
+    resultDiv.innerHTML = `<div class="import-result success">${res.message || '导入成功'}</div>`;
+    showToast(res.message || '导入成功');
+  } else {
+    resultDiv.innerHTML = `<div class="import-result error">${res.error}</div>`;
+    showToast(res.error, true);
+  }
 }
 
 async function showAddWarmupProject() {
