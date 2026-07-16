@@ -2,9 +2,12 @@ import { jsonSuccess, jsonError, verifyAdmin } from './_shared.js';
 
 export async function onRequestGet({ env }) {
   try {
+    try { await env.DB.prepare(`CREATE TABLE IF NOT EXISTS reward_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, bind_group_id INTEGER, order_index INTEGER NOT NULL DEFAULT 0)`).run(); } catch (e) {}
+    try { await env.DB.prepare(`CREATE TABLE IF NOT EXISTS reward_slot_persons (id INTEGER PRIMARY KEY AUTOINCREMENT, reward_project_id INTEGER NOT NULL, persons TEXT NOT NULL, order_index INTEGER NOT NULL DEFAULT 0)`).run(); } catch (e) {}
+
     const { results } = await env.DB.prepare(
       `SELECT rp.*, g.name as bind_group_name,
-              (SELECT COUNT(*) FROM reward_groups WHERE reward_project_id = rp.id) as group_count
+              (SELECT COUNT(*) FROM reward_slot_persons WHERE reward_project_id = rp.id) as person_count
        FROM reward_projects rp
        LEFT JOIN groups g ON rp.bind_group_id = g.id
        ORDER BY rp.order_index ASC, rp.id ASC`
