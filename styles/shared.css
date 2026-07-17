@@ -189,25 +189,19 @@ tr:hover { background: rgba(255,255,255,0.03); }
   margin-bottom: 16px;
   color: #f59e0b;
   font-size: 13px;
-  position: relative;
   overflow: hidden;
-  min-height: 20px;
-}
-
-.announcement-item {
-  position: absolute;
-  top: 8px;
-  left: 16px;
-  right: 16px;
-  opacity: 0;
-  transition: opacity 0.5s ease;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.announcement-item.active {
-  opacity: 1;
+.announcement-marquee {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marquee-scroll 30s linear infinite;
+}
+
+@keyframes marquee-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
 .loading { text-align: center; padding: 40px; color: #7b8cff; }

@@ -48,30 +48,17 @@ function esc(s) {
   return div.innerHTML;
 }
 
-let announcementIndex = 0;
-let announcementTimer = null;
-
 async function loadAnnouncements() {
   const bar = document.getElementById('announcementBar');
   if (!bar) return;
-  clearInterval(announcementTimer);
   try {
     const res = await apiGet('/announcements');
     if (res.success && res.data && res.data.length > 0) {
       const active = res.data.filter(a => a.is_active !== 0);
       if (active.length === 0) { bar.style.display = 'none'; return; }
-      bar.innerHTML = active.map(a => `<span class="announcement-item">${esc(a.content)}</span>`).join('');
+      const joined = active.map(a => a.content).join('  \u3000\u3000  ');
+      bar.innerHTML = `<span class="announcement-marquee">${esc(joined)}${esc('  \u3000\u3000  ' + joined)}</span>`;
       bar.style.display = 'block';
-      announcementIndex = 0;
-      bar.querySelector('.announcement-item').classList.add('active');
-      if (active.length > 1) {
-        announcementTimer = setInterval(() => {
-          const items = bar.querySelectorAll('.announcement-item');
-          items[announcementIndex % items.length].classList.remove('active');
-          announcementIndex = (announcementIndex + 1) % items.length;
-          items[announcementIndex].classList.add('active');
-        }, 4000);
-      }
     } else {
       bar.style.display = 'none';
     }
