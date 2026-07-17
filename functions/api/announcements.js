@@ -1,7 +1,10 @@
 import { jsonSuccess, jsonError, verifyAdmin } from './_shared.js';
+import { runMigrations } from './_migrate.js';
 
 export async function onRequestGet({ request, env }) {
   try {
+    await runMigrations(env);
+
     const url = new URL(request.url);
     const showAll = url.searchParams.get('all') === '1';
     const where = showAll ? '' : 'WHERE is_active = 1';
