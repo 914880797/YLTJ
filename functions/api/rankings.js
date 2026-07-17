@@ -24,7 +24,7 @@ export async function onRequestGet({ request, env }) {
 
     const { results: groupScores } = await env.DB.prepare(
       `SELECT sr.person_name, sr.group_id, g.name as group_name,
-              g.score_weight * COUNT(DISTINCT sr.slot_id) as group_score
+              SUM(sr.score) as group_score
        FROM score_records sr
        LEFT JOIN groups g ON sr.group_id = g.id
        ${where}
