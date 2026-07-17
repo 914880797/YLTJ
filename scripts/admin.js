@@ -838,49 +838,92 @@ async function loadReward() {
     return;
   }
 
-  const configRes = await apiGet('/reward-config');
-  const rewardData = configRes.success ? (configRes.data || []) : [];
-
-  let html = '<button class="btn btn-primary" style="margin-bottom:12px" onclick="showAddRewardProject()">添加奖励项目</button>';
-  html += '<button class="btn btn-outline" style="margin-bottom:12px;margin-left:6px" onclick="handleRewardAutoScore()">一键加分</button>';
-  html += '<input type="date" id="rewardAutoScoreDate" class="form-input" style="width:140px;margin-bottom:12px;margin-left:6px;display:inline-block">';
-  html += '<div id="rewardAutoScoreResult" style="margin-bottom:8px"></div>';
-
   const projects = projectsRes.data || [];
 
-  for (const rp of projects) {
-    const rpd = rewardData.find(d => d.id === rp.id) || { persons: [] };
+  let html = '';
+  html += '<button class="btn btn-primary" style="margin-bottom:12px" onclick="showAddRewardProject()">添加奖励项目</button>';
+  html += '<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">';
+  html += '<div style="flex:1;min-width:360px">';
 
+  for (const rp of projects) {
     html += `<div class="duty-project card" style="margin-bottom:8px">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div>
           <h3 style="color:#fff;font-size:14px;margin:0;display:inline">${esc(rp.name)}</h3>
-          ${rp.bind_group_name ? `<span style="color:#888;font-size:11px;margin-left:8px">绑定: ${esc(rp.bind_group_name)}</span>` : ''}
+          ${rp.bind_group_name ? `<span style="color:#888;font-size:11px;margin-left:8px">绑定: ${esc(rp.bind_group_name)}</span>` : '<span style="color:#ef4444;font-size:11px;margin-left:8px">未绑定</span>'}
           <span style="color:#f7a44a;font-size:11px;margin-left:8px">每人记${rp.score_weight || 1}分</span>
         </div>
         <div>
           <button onclick="editRewardProject(${rp.id},'${esc(rp.name)}',${rp.bind_group_id||0})" style="font-size:11px;padding:3px 8px">编辑</button>
           <button onclick="deleteRewardProject(${rp.id})" class="btn-danger" style="font-size:11px;padding:3px 8px">删除</button>
         </div>
-      </div>
-      <hr style="border-color:#333;margin:8px 0">`;
-
-    for (const sp of (rpd.persons || [])) {
-      html += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:12px;color:#b0b0c0">
-        <span style="flex:1;color:#fff">${esc(sp.persons || '')}</span>
-        <button onclick="editRewardSlotPerson(${sp.id},'${esc(sp.persons || '')}')" style="font-size:10px;padding:2px 6px">编辑</button>
-        <button onclick="deleteRewardSlotPerson(${sp.id})" class="btn-danger" style="font-size:10px;padding:2px 6px">删除</button>
-      </div>`;
-    }
-
-    html += `<div style="margin-top:6px" id="addRewardSlotForm_${rp.id}">
-      <button onclick="showAddRewardSlotPerson(${rp.id})" style="font-size:11px;padding:3px 8px">+ 添加人员</button>
-    </div></div>`;
+      </div></div>`;
   }
 
+  html += '</div>';
+
+  html += `<div class="card" style="flex:1;min-width:340px;">
+    <h3 style="color:#fff;margin:0 0 12px;font-size:15px">智能导入</h3>
+    <p style="color:#888;font-size:12px;margin-bottom:12px">选择奖励项目，粘贴人员名单直接导入计分</p>
+    <div class="form-group">
+      <label>选择奖励项目</label>
+      <select id="rewardImportProject">
+        <option value="">请选择奖励项目</option>
+        ${projects.map(rp => `<option value="${rp.id}|${rp.bind_group_id||''}">${esc(rp.name)}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>日期</label>
+      <input type="date" id="rewardImportDate" class="form-input">
+    </div>
+    <div class="form-group">
+      <label>粘贴人员名单（逗号/顿号/换行分隔）</label>
+      <textarea id="rewardImportNames" class="form-input" rows="4" style="resize:vertical;max-height:35vh;height:20vh;min-height:20vh" placeholder="张三，李四&#10;或每行一个名字&#10;支持逗号、顿号、换行分隔"></textarea>
+    </div>
+    <button class="btn btn-primary" onclick="handleRewardSmartImport()">开始导入</button>
+    <div id="rewardImportResult" style="margin-top:8px"></div>
+  </div>`;
+
+  html += '</div>';
   container.innerHTML = html;
-  const dateInput = document.getElementById('rewardAutoScoreDate');
-  if (dateInput) dateInput.value = todayDateStr();
+  document.getElementById('rewardImportDate').value = todayDateStr();
+}
+
+async function handleRewardSmartImport() {
+  const select = document.getElementById('rewardImportProject');
+  const val = select.value;
+  const recordDate = document.getElementById('rewardImportDate').value || todayDateStr();
+  const namesText = document.getElementById('rewardImportNames').value.trim();
+  const resultDiv = document.getElementById('rewardImportResult');
+
+  if (!val) return showToast('请选择奖励项目', true);
+  if (!namesText) return showToast('请输入人员名单', true);
+
+  const parts = val.split('|');
+  const projectId = parts[0];
+  const bindGroupId = parts[1];
+
+  if (!bindGroupId) { resultDiv.innerHTML = '<div class="import-result error">该奖励项目未绑定主分组</div>'; return; }
+
+  const names = namesText.split(/[,，、\n\r]+/).map(n => n.trim()).filter(n => n && !n.startsWith('-'));
+  if (names.length === 0) { resultDiv.innerHTML = '<div class="import-result error">未识别到有效姓名</div>'; return; }
+
+  resultDiv.innerHTML = `<div class="loading">正在导入 ${names.length} 人...</div>`;
+
+  const res = await apiAuthPost('/reward-config', {
+    type: 'smart-import',
+    reward_project_id: parseInt(projectId),
+    names: names,
+    record_date: recordDate
+  }, adminToken);
+
+  if (res.success) {
+    resultDiv.innerHTML = `<div class="import-result success">${res.message || '导入成功'}</div>`;
+    showToast(res.message || '导入成功');
+  } else {
+    resultDiv.innerHTML = `<div class="import-result error">${res.error}</div>`;
+    showToast(res.error, true);
+  }
 }
 
 async function showAddRewardProject() {
