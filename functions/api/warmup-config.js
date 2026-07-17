@@ -229,37 +229,20 @@ async function handleWarmupSmartImport(body, env) {
   }
 
   let slotIds = [];
-  if (project.has_slots === 0) {
-    let slot = await env.DB.prepare(
-      `SELECT id FROM time_slots WHERE group_id = ? AND name = ?`
-    ).bind(groupId, slotName).first();
-    if (!slot) {
-      await env.DB.prepare(
-        `INSERT INTO time_slots (group_id, name, time_range, order_index) VALUES (?, ?, ?, 0)`
-      ).bind(groupId, slotName, slotName).run();
-      slot = await env.DB.prepare(
-        `SELECT id FROM time_slots WHERE group_id = ? AND name = ?`
-      ).bind(groupId, slotName).first();
-    }
-    if (slot) slotIds = [slot.id];
-  } else {
-    const { results: slots } = await env.DB.prepare(
-      `SELECT id FROM time_slots WHERE group_id = ?`
-    ).bind(groupId).all();
-    slotIds = (slots || []).map(s => s.id);
-  }
-
-  if (slotIds.length === 0) {
+  let slot = await env.DB.prepare(
+    `SELECT id FROM time_slots WHERE group_id = ? AND name = ?`
+  ).bind(groupId, slotName).first();
+  if (!slot) {
     await env.DB.prepare(
       `INSERT INTO time_slots (group_id, name, time_range, order_index) VALUES (?, ?, ?, 0)`
     ).bind(groupId, slotName, slotName).run();
-    const slot = await env.DB.prepare(
+    slot = await env.DB.prepare(
       `SELECT id FROM time_slots WHERE group_id = ? AND name = ?`
     ).bind(groupId, slotName).first();
-    if (slot) slotIds = [slot.id];
   }
+  if (slot) slotIds = [slot.id];
 
-  if (slotIds.length === 0) return jsonError('无法创建默认时段', 400);
+  if (slotIds.length === 0) return jsonError('无法创建时段', 400);
 
   let imported = 0;
   const errors = [];
