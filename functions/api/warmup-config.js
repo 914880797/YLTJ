@@ -220,18 +220,26 @@ async function handleWarmupSmartImport(body, env) {
   const weight = project.group_score_weight || 1;
   const now = formatBeijingNow();
 
+  let slotName = '全天';
+  if (warmup_group_id) {
+    const wg = await env.DB.prepare(
+      `SELECT name FROM warmup_groups WHERE id = ?`
+    ).bind(warmup_group_id).first();
+    if (wg && wg.name) slotName = wg.name;
+  }
+
   let slotIds = [];
   if (project.has_slots === 0) {
     let slot = await env.DB.prepare(
       `SELECT id FROM time_slots WHERE group_id = ? AND name = ?`
-    ).bind(groupId, project.name).first();
+    ).bind(groupId, slotName).first();
     if (!slot) {
       await env.DB.prepare(
-        `INSERT INTO time_slots (group_id, name, time_range, order_index) VALUES (?, ?, '全天', 0)`
-      ).bind(groupId, project.name).run();
+        `INSERT INTO time_slots (group_id, name, time_range, order_index) VALUES (?, ?, ?, 0)`
+      ).bind(groupId, slotName, slotName).run();
       slot = await env.DB.prepare(
         `SELECT id FROM time_slots WHERE group_id = ? AND name = ?`
-      ).bind(groupId, project.name).first();
+      ).bind(groupId, slotName).first();
     }
     if (slot) slotIds = [slot.id];
   } else {
@@ -243,11 +251,11 @@ async function handleWarmupSmartImport(body, env) {
 
   if (slotIds.length === 0) {
     await env.DB.prepare(
-      `INSERT INTO time_slots (group_id, name, time_range, order_index) VALUES (?, '全天', '全天', 0)`
-    ).bind(groupId).run();
+      `INSERT INTO time_slots (group_id, name, time_range, order_index) VALUES (?, ?, ?, 0)`
+    ).bind(groupId, slotName, slotName).run();
     const slot = await env.DB.prepare(
-      `SELECT id FROM time_slots WHERE group_id = ? AND name = '全天'`
-    ).bind(groupId).first();
+      `SELECT id FROM time_slots WHERE group_id = ? AND name = ?`
+    ).bind(groupId, slotName).first();
     if (slot) slotIds = [slot.id];
   }
 
