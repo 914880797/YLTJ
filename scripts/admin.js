@@ -88,7 +88,7 @@ async function loadGroups() {
         <div>
           <span id="${projectKey}_arrow" data-group-project style="color:#888;font-size:12px;margin-right:6px">&#9654;</span>
           <h3 style="color:#fff;font-size:14px;margin:0;display:inline">${esc(g.name)}</h3>
-          <span style="color:#888;font-size:11px;margin-left:8px">${g.slot_count || 0} 个时段</span>
+          ${g.has_slots !== 0 ? `<span style="color:#888;font-size:11px;margin-left:8px">${g.slot_count || 0} 个时段</span>` : ''}
           <span style="color:#f7a44a;font-size:11px;margin-left:8px">权重 ${g.score_weight || 1}</span>
         </div>
         <div>

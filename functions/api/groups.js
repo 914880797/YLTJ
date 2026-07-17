@@ -6,7 +6,7 @@ export async function onRequestGet({ env }) {
     await runMigrations(env);
 
     const { results } = await env.DB.prepare(
-      `SELECT g.*, (SELECT COUNT(*) FROM time_slots WHERE group_id = g.id) as slot_count
+       `SELECT g.*, (SELECT COUNT(*) FROM time_slots WHERE group_id = g.id AND (source IS NULL OR source = 'groups')) as slot_count
        FROM groups g ORDER BY g.order_index ASC, g.id ASC`
     ).all();
     return jsonSuccess({ data: results || [] });
