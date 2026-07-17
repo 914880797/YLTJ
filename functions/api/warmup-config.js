@@ -241,7 +241,17 @@ async function handleWarmupSmartImport(body, env) {
     slotIds = (slots || []).map(s => s.id);
   }
 
-  if (slotIds.length === 0) return jsonError('未找到可用时段', 400);
+  if (slotIds.length === 0) {
+    await env.DB.prepare(
+      `INSERT INTO time_slots (group_id, name, time_range, order_index) VALUES (?, '全天', '全天', 0)`
+    ).bind(groupId).run();
+    const slot = await env.DB.prepare(
+      `SELECT id FROM time_slots WHERE group_id = ? AND name = '全天'`
+    ).bind(groupId).first();
+    if (slot) slotIds = [slot.id];
+  }
+
+  if (slotIds.length === 0) return jsonError('无法创建默认时段', 400);
 
   let imported = 0;
   const errors = [];
