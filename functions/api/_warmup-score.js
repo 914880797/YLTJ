@@ -132,7 +132,7 @@ export async function autoScoreWarmup(env, targetDate) {
           slotCache[cacheKey] = [existing.id];
         } else {
           await env.DB.prepare(
-            `INSERT INTO time_slots (group_id, name, time_range, order_index) VALUES (?, ?, '全天', 0)`
+            `INSERT INTO time_slots (group_id, name, time_range, order_index, source) VALUES (?, ?, '全天', 0, 'auto-warmup')`
           ).bind(groupId, slotName).run();
           const slot = await env.DB.prepare(
             `SELECT id FROM time_slots WHERE group_id = ? AND name = ?`

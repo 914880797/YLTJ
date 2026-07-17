@@ -100,8 +100,8 @@ async function loadGroups() {
         </div>
       </div>
       <div id="${projectKey}_body" data-group-project style="display:none;margin-top:8px;border-top:1px solid #333;padding-top:8px">${
-        allSlots.filter(s => s.group_id == g.id).length > 0
-          ? allSlots.filter(s => s.group_id == g.id).map(s => `<span style="display:inline-block;background:#1a1a2e;color:#b0b0c0;font-size:12px;padding:2px 8px;border-radius:3px;margin:2px 4px 2px 0">${esc(s.time_range || s.name)}</span>`).join('')
+        allSlots.filter(s => s.group_id == g.id && (!s.source || s.source === 'groups')).length > 0
+          ? allSlots.filter(s => s.group_id == g.id && (!s.source || s.source === 'groups')).map(s => `<span style="display:inline-block;background:#1a1a2e;color:#b0b0c0;font-size:12px;padding:2px 8px;border-radius:3px;margin:2px 4px 2px 0">${esc(s.time_range || s.name)}</span>`).join('')
           : '<span style="color:#888;font-size:12px">暂无时段</span>'
       }</div></div>`;
   }
@@ -171,7 +171,7 @@ async function onGroupImportChange() {
   const allSlots = await apiGet('/time-slots');
   let slots = [];
   if (allSlots.success && allSlots.data) {
-    slots = allSlots.data.filter(s => s.group_id == groupId);
+    slots = allSlots.data.filter(s => s.group_id == groupId && (!s.source || s.source === 'groups'));
   }
 
   if (slots.length === 0) {

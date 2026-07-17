@@ -43,7 +43,7 @@ export async function onRequestPost({ request, env }) {
       ).bind(name.trim()).first();
       if (groupResult) {
         await env.DB.prepare(
-          `INSERT INTO time_slots (group_id, name, time_range, order_index) VALUES (?, '默认', '全天', 0)`
+          `INSERT INTO time_slots (group_id, name, time_range, order_index, source) VALUES (?, '默认', '全天', 0, 'groups')`
         ).bind(groupResult.id).run();
       }
     }
@@ -86,7 +86,7 @@ export async function onRequestPut({ request, env }) {
         ).bind(id).first();
         if (!existingSlot) {
           await env.DB.prepare(
-            `INSERT INTO time_slots (group_id, name, time_range, order_index) VALUES (?, '默认', '全天', 0)`
+            `INSERT INTO time_slots (group_id, name, time_range, order_index, source) VALUES (?, '默认', '全天', 0, 'groups')`
           ).bind(id).run();
         }
       }
@@ -147,7 +147,7 @@ async function handleGroupSmartImport(body, env) {
     ).bind(group_id, slotName).first();
     if (!found) {
       await env.DB.prepare(
-        `INSERT INTO time_slots (group_id, name, time_range, order_index) VALUES (?, ?, ?, 0)`
+        `INSERT INTO time_slots (group_id, name, time_range, order_index, source) VALUES (?, ?, ?, 0, 'groups')`
       ).bind(group_id, slotName, group.has_slots ? slotName : '全天').run();
       found = await env.DB.prepare(
         `SELECT id FROM time_slots WHERE group_id = ? AND name = ?`

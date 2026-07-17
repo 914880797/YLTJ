@@ -40,7 +40,7 @@ export async function onRequestPost({ request, env }) {
     if (exists) return jsonError('该时段已存在', 400);
 
     const result = await env.DB.prepare(
-      `INSERT INTO time_slots (group_id, name, time_range, order_index) VALUES (?, ?, ?, ?)`
+      `INSERT INTO time_slots (group_id, name, time_range, order_index, source) VALUES (?, ?, ?, ?, 'groups')`
     ).bind(group_id, slotName, time_range.trim(), order_index || 0).run();
 
     return jsonSuccess({ message: '时段添加成功', id: result.meta?.last_row_id });

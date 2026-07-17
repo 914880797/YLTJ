@@ -173,7 +173,7 @@ async function handleRewardSmartImport(body, env) {
   ).bind(groupId, slotName).first();
   if (!slot) {
     await env.DB.prepare(
-      `INSERT INTO time_slots (group_id, name, time_range, order_index) VALUES (?, ?, ?, 0)`
+      `INSERT INTO time_slots (group_id, name, time_range, order_index, source) VALUES (?, ?, ?, 0, 'reward')`
     ).bind(groupId, slotName, slotName).run();
     slot = await env.DB.prepare(
       `SELECT id FROM time_slots WHERE group_id = ? AND name = ?`
