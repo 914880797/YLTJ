@@ -79,20 +79,25 @@ async function loadGroups() {
   html += '<div style="flex:1;min-width:360px">';
 
   for (const g of groups) {
+    const projectKey = `group_${g.id}`;
     html += `<div class="duty-project card" style="margin-bottom:8px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
+      <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleGroupProject('${projectKey}')">
         <div>
+          <span id="${projectKey}_arrow" data-group-project style="color:#888;font-size:12px;margin-right:6px">&#9654;</span>
           <h3 style="color:#fff;font-size:14px;margin:0;display:inline">${esc(g.name)}</h3>
           <span style="color:#888;font-size:11px;margin-left:8px">${g.slot_count || 0} 个时段</span>
           <span style="color:#f7a44a;font-size:11px;margin-left:8px">权重 ${g.score_weight || 1}</span>
         </div>
         <div>
-          ${g.has_slots !== 0 ? `<button onclick="loadSlots(${g.id}, '${esc(g.name)}')" style="font-size:11px;padding:3px 8px">时段</button>` : ''}
-          <button onclick="editGroup(${g.id}, '${esc(g.name)}', ${g.order_index}, ${g.has_slots||1})" style="font-size:11px;padding:3px 8px">编辑</button>
-          ${g.order_index > 1 ? `<button onclick="moveGroup(${g.id}, -1)" style="font-size:11px;padding:3px 8px">上移</button>` : ''}
-          ${g.order_index < groups.length ? `<button onclick="moveGroup(${g.id}, 1)" style="font-size:11px;padding:3px 8px">下移</button>` : ''}
-          <button class="btn-danger" onclick="deleteGroup(${g.id})" style="font-size:11px;padding:3px 8px">删除</button>
+          ${g.has_slots !== 0 ? `<button onclick="event.stopPropagation();loadSlots(${g.id}, '${esc(g.name)}')" style="font-size:11px;padding:3px 8px">时段</button>` : ''}
+          <button onclick="event.stopPropagation();editGroup(${g.id}, '${esc(g.name)}', ${g.order_index}, ${g.has_slots||1})" style="font-size:11px;padding:3px 8px">编辑</button>
+          ${g.order_index > 1 ? `<button onclick="event.stopPropagation();moveGroup(${g.id}, -1)" style="font-size:11px;padding:3px 8px">上移</button>` : ''}
+          ${g.order_index < groups.length ? `<button onclick="event.stopPropagation();moveGroup(${g.id}, 1)" style="font-size:11px;padding:3px 8px">下移</button>` : ''}
+          <button class="btn-danger" onclick="event.stopPropagation();deleteGroup(${g.id})" style="font-size:11px;padding:3px 8px">删除</button>
         </div>
+      </div>
+      <div id="${projectKey}_body" data-group-project style="display:none;margin-top:8px;border-top:1px solid #333;padding-top:8px">
+        <p style="color:#888;font-size:12px;margin:0">${g.slot_count || 0} 个时段 | 权重 ${g.score_weight || 1}${g.has_slots === 0 ? ' | 全天计分' : ''}</p>
       </div></div>`;
   }
 
@@ -100,13 +105,21 @@ async function loadGroups() {
 
   html += `<div class="card" style="flex:1;min-width:340px;">
     <h3 style="color:#fff;margin:0 0 12px;font-size:15px">智能导入</h3>
-    <p style="color:#888;font-size:12px;margin-bottom:12px">选择分组，粘贴人员名单直接导入计分</p>
-    <div class="form-group">
-      <label>选择分组</label>
-      <select id="groupImportGroup">
-        <option value="">请选择分组</option>
-        ${groups.map(g => `<option value="${g.id}|${g.score_weight||1}|${g.has_slots||1}">${esc(g.name)}</option>`).join('')}
-      </select>
+    <p style="color:#888;font-size:12px;margin-bottom:12px">选择分组和时段，粘贴人员名单直接导入计分</p>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <div class="form-group" style="flex:1;margin-bottom:0">
+        <label>选择分组</label>
+        <select id="groupImportGroup" onchange="onGroupImportChange()">
+          <option value="">请选择分组</option>
+          ${groups.filter(g => g.has_slots !== 0).map(g => `<option value="${g.id}|${g.score_weight||1}">${esc(g.name)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group" style="flex:1;margin-bottom:0">
+        <label>选择时段</label>
+        <select id="groupImportSlot">
+          <option value="">请先选择分组</option>
+        </select>
+      </div>
     </div>
     <div class="form-group">
       <label>日期</label>
@@ -125,14 +138,56 @@ async function loadGroups() {
   document.getElementById('groupImportDate').value = todayDateStr();
 }
 
+function toggleGroupProject(key) {
+  const body = document.getElementById(key + '_body');
+  const arrow = document.getElementById(key + '_arrow');
+  const isOpen = body.style.display !== 'none';
+
+  document.querySelectorAll('[id$="_body"][data-group-project]').forEach(b => { b.style.display = 'none'; });
+  document.querySelectorAll('[id$="_arrow"][data-group-project]').forEach(a => { a.textContent = '\u25B6'; });
+
+  if (!isOpen) {
+    body.style.display = 'block';
+    arrow.textContent = '\u25BC';
+  }
+}
+
+async function onGroupImportChange() {
+  const select = document.getElementById('groupImportGroup');
+  const slotSelect = document.getElementById('groupImportSlot');
+  const val = select.value;
+
+  if (!val) {
+    slotSelect.innerHTML = '<option value="">请先选择分组</option>';
+    return;
+  }
+
+  const groupId = val.split('|')[0];
+  const allSlots = await apiGet('/time-slots');
+  let slots = [];
+  if (allSlots.success && allSlots.data) {
+    slots = allSlots.data.filter(s => s.group_id == groupId);
+  }
+
+  if (slots.length === 0) {
+    slotSelect.innerHTML = '<option value="">该分组暂无时段</option>';
+    return;
+  }
+
+  slotSelect.innerHTML = slots.map(s => `<option value="${s.id}">${esc(s.time_range || s.name)}</option>`).join('');
+}
+
 async function handleGroupSmartImport() {
   const select = document.getElementById('groupImportGroup');
   const val = select.value;
+  const slotSelect = document.getElementById('groupImportSlot');
+  const slotId = slotSelect.value;
   const recordDate = document.getElementById('groupImportDate').value || todayDateStr();
   const namesText = document.getElementById('groupImportNames').value.trim();
   const resultDiv = document.getElementById('groupImportResult');
 
   if (!val) return showToast('请选择分组', true);
+  if (!slotId) return showToast('请选择时段', true);
   if (!namesText) return showToast('请输入人员名单', true);
 
   const parts = val.split('|');
@@ -146,6 +201,7 @@ async function handleGroupSmartImport() {
   const res = await apiAuthPost('/groups', {
     type: 'smart-import',
     group_id: parseInt(groupId),
+    slot_id: parseInt(slotId),
     names: names,
     record_date: recordDate
   }, adminToken);
