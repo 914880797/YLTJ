@@ -358,12 +358,13 @@ function todayDateStr() {
 async function loadAnnouncements() {
   const container = document.getElementById('announcementsList');
   if (!container) return;
-  const res = await apiGet('/announcements');
+  const res = await apiGet('/announcements?all=1');
   if (!res.success) return;
 
   let html = '';
   for (const a of (res.data || [])) {
     html += `<div class="announcement-item">
+      <span style="color:#4a6cf7;font-weight:600;font-size:12px;margin-right:8px;min-width:24px">#${a.order_index || 0}</span>
       <span class="announcement-content">${esc(a.content)}</span>
       <span class="${a.is_active ? 'announcement-active' : 'announcement-inactive'}">${a.is_active ? '启用' : '停用'}</span>
       ${a.is_active ? `<button class="btn btn-outline" style="font-size:11px;padding:3px 8px" onclick="toggleAnnouncement(${a.id}, 0)">停用</button>` : ''}
