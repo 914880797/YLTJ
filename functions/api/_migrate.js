@@ -6,6 +6,14 @@ export async function runMigrations(env) {
   try { await env.DB.prepare(`CREATE TABLE IF NOT EXISTS settings (id INTEGER PRIMARY KEY AUTOINCREMENT, key TEXT NOT NULL UNIQUE, value TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch (e) {}
   try { await env.DB.prepare(`CREATE TABLE IF NOT EXISTS announcements (id INTEGER PRIMARY KEY AUTOINCREMENT, content TEXT NOT NULL, is_active INTEGER DEFAULT 1, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run(); } catch (e) {}
   try { await env.DB.prepare(`ALTER TABLE announcements ADD COLUMN order_index INTEGER NOT NULL DEFAULT 0`).run(); } catch (e) {}
+  try {
+    const { results } = await env.DB.prepare(`SELECT id, order_index FROM announcements ORDER BY order_index ASC, id ASC`).all();
+    if (results && results.length > 0 && (results[0].order_index || 0) === 0) {
+      for (let i = 0; i < results.length; i++) {
+        await env.DB.prepare(`UPDATE announcements SET order_index = ? WHERE id = ?`).bind(i + 1, results[i].id).run();
+      }
+    }
+  } catch (e) {}
   try { await env.DB.prepare(`CREATE TABLE IF NOT EXISTS admin_users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE, is_active INTEGER DEFAULT 1)`).run(); } catch (e) {}
   try { await env.DB.prepare(`CREATE TABLE IF NOT EXISTS duty_projects (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, bind_group_id INTEGER, order_index INTEGER NOT NULL DEFAULT 0, FOREIGN KEY (bind_group_id) REFERENCES groups(id) ON DELETE SET NULL)`).run(); } catch (e) {}
   try { await env.DB.prepare(`CREATE TABLE IF NOT EXISTS duty_groups (id INTEGER PRIMARY KEY AUTOINCREMENT, duty_project_id INTEGER NOT NULL, name TEXT NOT NULL, order_index INTEGER NOT NULL DEFAULT 0, FOREIGN KEY (duty_project_id) REFERENCES duty_projects(id) ON DELETE CASCADE)`).run(); } catch (e) {}
