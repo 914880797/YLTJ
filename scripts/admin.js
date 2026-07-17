@@ -71,24 +71,92 @@ async function loadGroups() {
   const res = await apiGet('/groups');
   if (!res.success) { container.innerHTML = `<div class="empty">${res.error}</div>`; return; }
 
+  const groups = res.data || [];
+
   let html = '';
-  for (const g of (res.data || [])) {
-    html += `<div class="group-item">
-      <div class="group-info">
-        <div class="group-name">${esc(g.name)}</div>
-        <div class="group-meta">${g.slot_count || 0} 个时段</div>
-      </div>
-      <div class="group-actions">
-        ${g.has_slots !== 0 ? `<button onclick="loadSlots(${g.id}, '${esc(g.name)}')">时段管理</button>` : ''}
-        <button onclick="editGroup(${g.id}, '${esc(g.name)}', ${g.order_index}, ${g.has_slots||1})">编辑</button>
-        ${g.order_index > 1 ? `<button onclick="moveGroup(${g.id}, -1)">上移</button>` : ''}
-        ${g.order_index < (res.data?.length || 0) ? `<button onclick="moveGroup(${g.id}, 1)">下移</button>` : ''}
-        <button class="btn-danger" onclick="deleteGroup(${g.id})">删除</button>
-      </div>
-    </div>`;
+  html += '<button class="btn btn-primary" style="margin-bottom:12px" onclick="showAddGroup()">添加分组</button>';
+  html += '<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">';
+  html += '<div style="flex:1;min-width:360px">';
+
+  for (const g of groups) {
+    html += `<div class="duty-project card" style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <h3 style="color:#fff;font-size:14px;margin:0;display:inline">${esc(g.name)}</h3>
+          <span style="color:#888;font-size:11px;margin-left:8px">${g.slot_count || 0} 个时段</span>
+          <span style="color:#f7a44a;font-size:11px;margin-left:8px">权重 ${g.score_weight || 1}</span>
+        </div>
+        <div>
+          ${g.has_slots !== 0 ? `<button onclick="loadSlots(${g.id}, '${esc(g.name)}')" style="font-size:11px;padding:3px 8px">时段</button>` : ''}
+          <button onclick="editGroup(${g.id}, '${esc(g.name)}', ${g.order_index}, ${g.has_slots||1})" style="font-size:11px;padding:3px 8px">编辑</button>
+          ${g.order_index > 1 ? `<button onclick="moveGroup(${g.id}, -1)" style="font-size:11px;padding:3px 8px">上移</button>` : ''}
+          ${g.order_index < groups.length ? `<button onclick="moveGroup(${g.id}, 1)" style="font-size:11px;padding:3px 8px">下移</button>` : ''}
+          <button class="btn-danger" onclick="deleteGroup(${g.id})" style="font-size:11px;padding:3px 8px">删除</button>
+        </div>
+      </div></div>`;
   }
-  html += `<button class="btn btn-primary" style="margin-top:8px" onclick="showAddGroup()">添加分组</button>`;
+
+  html += '</div>';
+
+  html += `<div class="card" style="flex:1;min-width:340px;">
+    <h3 style="color:#fff;margin:0 0 12px;font-size:15px">智能导入</h3>
+    <p style="color:#888;font-size:12px;margin-bottom:12px">选择分组，粘贴人员名单直接导入计分</p>
+    <div class="form-group">
+      <label>选择分组</label>
+      <select id="groupImportGroup">
+        <option value="">请选择分组</option>
+        ${groups.map(g => `<option value="${g.id}|${g.score_weight||1}|${g.has_slots||1}">${esc(g.name)}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>日期</label>
+      <input type="date" id="groupImportDate" class="form-input">
+    </div>
+    <div class="form-group">
+      <label>粘贴人员名单（逗号/顿号/换行分隔）</label>
+      <textarea id="groupImportNames" class="form-input" rows="4" style="resize:vertical;max-height:35vh;height:20vh;min-height:20vh" placeholder="张三，李四&#10;或每行一个名字&#10;支持逗号、顿号、换行分隔"></textarea>
+    </div>
+    <button class="btn btn-primary" onclick="handleGroupSmartImport()">开始导入</button>
+    <div id="groupImportResult" style="margin-top:8px"></div>
+  </div>`;
+
+  html += '</div>';
   container.innerHTML = html;
+  document.getElementById('groupImportDate').value = todayDateStr();
+}
+
+async function handleGroupSmartImport() {
+  const select = document.getElementById('groupImportGroup');
+  const val = select.value;
+  const recordDate = document.getElementById('groupImportDate').value || todayDateStr();
+  const namesText = document.getElementById('groupImportNames').value.trim();
+  const resultDiv = document.getElementById('groupImportResult');
+
+  if (!val) return showToast('请选择分组', true);
+  if (!namesText) return showToast('请输入人员名单', true);
+
+  const parts = val.split('|');
+  const groupId = parts[0];
+
+  const names = namesText.split(/[,，、\n\r]+/).map(n => n.trim()).filter(n => n && !n.startsWith('-'));
+  if (names.length === 0) { resultDiv.innerHTML = '<div class="import-result error">未识别到有效姓名</div>'; return; }
+
+  resultDiv.innerHTML = `<div class="loading">正在导入 ${names.length} 人...</div>`;
+
+  const res = await apiAuthPost('/groups', {
+    type: 'smart-import',
+    group_id: parseInt(groupId),
+    names: names,
+    record_date: recordDate
+  }, adminToken);
+
+  if (res.success) {
+    resultDiv.innerHTML = `<div class="import-result success">${res.message || '导入成功'}</div>`;
+    showToast(res.message || '导入成功');
+  } else {
+    resultDiv.innerHTML = `<div class="import-result error">${res.error}</div>`;
+    showToast(res.error, true);
+  }
 }
 
 async function showAddGroup() {

@@ -1,4 +1,4 @@
-import { jsonSuccess, jsonError, verifyAdmin } from './_shared.js';
+import { jsonSuccess, jsonError, verifyAdmin, formatBeijingNow } from './_shared.js';
 import { runMigrations } from './_migrate.js';
 
 export async function onRequestGet({ env }) {
@@ -19,8 +19,14 @@ export async function onRequestPost({ request, env }) {
   const isAdmin = await verifyAdmin(request, env);
   if (!isAdmin) return jsonError('未授权访问', 401);
   try {
-    const { name, order_index, score_weight, has_slots } = await request.json();
-    if (!name || !name.trim()) return jsonError('分组名称不能为空', 400);
+    const body = await request.json();
+    const { type } = body;
+
+    if (type === 'smart-import') {
+      return handleGroupSmartImport(body, env);
+    }
+
+    const { name, order_index, score_weight, has_slots } = body;    if (!name || !name.trim()) return jsonError('分组名称不能为空', 400);
 
     const exists = await env.DB.prepare(
       `SELECT id FROM groups WHERE name = ?`
@@ -108,4 +114,61 @@ export async function onRequestDelete({ request, env }) {
   } catch (error) {
     return jsonError(error.message);
   }
+}
+
+async function handleGroupSmartImport(body, env) {
+  const { group_id, names, record_date } = body;
+  if (!group_id) return jsonError('缺少分组 ID', 400);
+  if (!names || !Array.isArray(names) || names.length === 0) return jsonError('缺少人员名单', 400);
+
+  const group = await env.DB.prepare(
+    `SELECT id, name, score_weight, has_slots FROM groups WHERE id = ?`
+  ).bind(group_id).first();
+
+  if (!group) return jsonError('分组不存在', 400);
+
+  const weight = group.score_weight || 1;
+  const now = formatBeijingNow();
+  const slotName = group.name;
+
+  let slot = await env.DB.prepare(
+    `SELECT id FROM time_slots WHERE group_id = ? AND name = ?`
+  ).bind(group_id, slotName).first();
+  if (!slot) {
+    await env.DB.prepare(
+      `INSERT INTO time_slots (group_id, name, time_range, order_index) VALUES (?, ?, ?, 0)`
+    ).bind(group_id, slotName, group.has_slots ? slotName : '全天').run();
+    slot = await env.DB.prepare(
+      `SELECT id FROM time_slots WHERE group_id = ? AND name = ?`
+    ).bind(group_id, slotName).first();
+  }
+
+  if (!slot) return jsonError('无法创建时段', 400);
+
+  let imported = 0;
+  const batch = [];
+
+  for (const name of names) {
+    const exists = await env.DB.prepare(
+      `SELECT id FROM score_records WHERE person_name = ? AND group_id = ? AND slot_id = ? AND record_date = ?`
+    ).bind(name, group_id, slot.id, record_date).first();
+    if (exists) continue;
+
+    batch.push(
+      env.DB.prepare(
+        `INSERT INTO score_records (person_name, group_id, slot_id, score, record_date, created_at)
+         VALUES (?, ?, ?, ?, ?, ?)`
+      ).bind(name, group_id, slot.id, weight, record_date, now)
+    );
+    imported++;
+  }
+
+  if (batch.length > 0) {
+    await env.DB.batch(batch);
+  }
+
+  return jsonSuccess({
+    message: `成功导入 ${imported} 条记录`,
+    imported
+  });
 }
