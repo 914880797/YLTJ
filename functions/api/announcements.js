@@ -40,6 +40,19 @@ export async function onRequestPut({ request, env }) {
     const { id, is_active } = await request.json();
     if (!id) return jsonError('缺少公告 ID', 400);
 
+    if (is_active === 0) {
+      await env.DB.prepare(`DELETE FROM announcements WHERE id = ?`).bind(id).run();
+      const { results: remaining } = await env.DB.prepare(
+        `SELECT id FROM announcements ORDER BY order_index ASC, id ASC`
+      ).all();
+      for (let i = 0; i < (remaining || []).length; i++) {
+        await env.DB.prepare(
+          `UPDATE announcements SET order_index = ? WHERE id = ?`
+        ).bind(i + 1, remaining[i].id).run();
+      }
+      return jsonSuccess({ message: '公告已删除' });
+    }
+
     await env.DB.prepare(
       `UPDATE announcements SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
     ).bind(is_active || 0, id).run();

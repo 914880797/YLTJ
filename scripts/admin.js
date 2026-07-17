@@ -362,12 +362,13 @@ async function loadAnnouncements() {
   if (!res.success) return;
 
   let html = '';
-  for (const a of (res.data || [])) {
+  const activeList = (res.data || []).filter(a => a.is_active);
+  for (const a of activeList) {
     html += `<div class="announcement-item">
       <span style="color:#4a6cf7;font-weight:600;font-size:12px;margin-right:8px;min-width:24px">#${a.order_index || 0}</span>
       <span class="announcement-content">${esc(a.content)}</span>
-      <span class="${a.is_active ? 'announcement-active' : 'announcement-inactive'}">${a.is_active ? '启用' : '停用'}</span>
-      ${a.is_active ? `<button class="btn btn-outline" style="font-size:11px;padding:3px 8px" onclick="toggleAnnouncement(${a.id}, 0)">停用</button>` : ''}
+      <span class="announcement-active">启用</span>
+      <button class="btn btn-outline" style="font-size:11px;padding:3px 8px" onclick="toggleAnnouncement(${a.id}, 0)">停用</button>
     </div>`;
   }
   html += `<div style="margin-top:8px; display:flex; gap:6px;">

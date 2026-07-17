@@ -56,7 +56,7 @@ async function loadAnnouncements() {
     if (res.success && res.data && res.data.length > 0) {
       const active = res.data.filter(a => a.is_active !== 0);
       if (active.length === 0) { bar.style.display = 'none'; return; }
-      const joined = active.map(a => a.content).join('  \u3000\u3000  ');
+      const joined = active.map(a => `#${a.order_index || 0} ${a.content}`).join('  \u3000\u3000  ');
       bar.innerHTML = `<span class="announcement-marquee">${esc(joined)}${esc('  \u3000\u3000  ' + joined)}</span>`;
       bar.style.display = 'block';
     } else {
