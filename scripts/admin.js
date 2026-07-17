@@ -73,6 +73,9 @@ async function loadGroups() {
 
   const groups = res.data || [];
 
+  const slotsRes = await apiGet('/time-slots');
+  const allSlots = (slotsRes.success && slotsRes.data) ? slotsRes.data : [];
+
   let html = '';
   html += '<button class="btn btn-primary" style="margin-bottom:12px" onclick="showAddGroup()">添加分组</button>';
   html += '<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">';
@@ -96,9 +99,11 @@ async function loadGroups() {
           <button class="btn-danger" onclick="event.stopPropagation();deleteGroup(${g.id})" style="font-size:11px;padding:3px 8px">删除</button>
         </div>
       </div>
-      <div id="${projectKey}_body" data-group-project style="display:none;margin-top:8px;border-top:1px solid #333;padding-top:8px">
-        <p style="color:#888;font-size:12px;margin:0">${g.slot_count || 0} 个时段 | 权重 ${g.score_weight || 1}${g.has_slots === 0 ? ' | 全天计分' : ''}</p>
-      </div></div>`;
+      <div id="${projectKey}_body" data-group-project style="display:none;margin-top:8px;border-top:1px solid #333;padding-top:8px">${
+        allSlots.filter(s => s.group_id == g.id).length > 0
+          ? allSlots.filter(s => s.group_id == g.id).map(s => `<span style="display:inline-block;background:#1a1a2e;color:#b0b0c0;font-size:12px;padding:2px 8px;border-radius:3px;margin:2px 4px 2px 0">${esc(s.time_range || s.name)}</span>`).join('')
+          : '<span style="color:#888;font-size:12px">暂无时段</span>'
+      }</div></div>`;
   }
 
   html += '</div>';
