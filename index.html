@@ -11,8 +11,8 @@
   <script src="/utils/sentry.js"></script>
   <script src="/utils/frontend-utils.js"></script>
 </head>
-<body>
-  <div class="container">
+<body style="height:100vh;display:flex;align-items:center;justify-content:center">
+  <div class="container" style="width:70vw;height:90vh;display:flex;flex-direction:column;overflow:hidden;max-width:none">
     <h1>排行榜</h1>
     <div class="nav-row">
       <a href="/" class="back-btn">首页</a>
@@ -26,7 +26,7 @@
 
     <input type="text" id="searchInput" class="search-box" placeholder="搜索姓名过滤排名...">
 
-    <div id="rankingList">
+    <div id="rankingList" style="flex:1;overflow-y:auto;min-height:0">
       <div class="loading">加载中...</div>
     </div>
   </div>
