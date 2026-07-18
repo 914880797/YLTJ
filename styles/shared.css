@@ -122,6 +122,10 @@ th {
   letter-spacing: 0.5px;
   white-space: nowrap;
   border-bottom-width: 2px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #ffffff;
 }
 
 tr:nth-child(even) { background: #f9fafb; }
