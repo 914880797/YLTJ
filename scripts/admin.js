@@ -474,7 +474,7 @@ async function loadDuty() {
       <hr style="border-color:#ddd;margin:8px 0">`;
 
     for (const dg of dpd.groups) {
-      html += `<div class="duty-group-item" style="margin-bottom:6px;padding:8px;background:#f0f0f0;border-radius:4px">
+      html += `<div class="duty-group-item" style="margin-bottom:6px;padding:8px;background:#ffffff;border:1px solid #d0d0d0;border-radius:4px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <span style="color:#4a6cf7;font-weight:600;font-size:13px">${esc(dg.name || '未命名')}</span>
           <div>
@@ -1141,7 +1141,7 @@ async function loadWarmup() {
       <div id="${projectKey}_body" data-warmup-project style="display:none;margin-top:8px;border-top:1px solid #ddd;padding-top:8px">`;
 
     for (const wg of wpd.groups) {
-      html += `<div class="duty-group-item" style="margin-bottom:6px;padding:8px;background:#f0f0f0;border-radius:4px">
+      html += `<div class="duty-group-item" style="margin-bottom:6px;padding:8px;background:#ffffff;border:1px solid #d0d0d0;border-radius:4px">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <span style="color:#4a6cf7;font-weight:600;font-size:13px">${esc(wg.name || '未命名')}</span>
           <div>
