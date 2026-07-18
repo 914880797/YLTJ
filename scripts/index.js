@@ -18,15 +18,17 @@ async function loadRankings() {
     }
 
     let html = '<div class="card"><table><thead><tr>';
-    html += '<th>排名</th><th>姓名</th>';
+    html += '<th>排序</th><th>姓名</th>';
     for (const gn of groupNames) {
       html += `<th>${gn}</th>`;
     }
     html += '<th>总分</th></tr></thead><tbody>';
 
+    const medals = { 1: '\u{1F947}', 2: '\u{1F948}', 3: '\u{1F949}' };
     for (const row of res.data) {
       html += '<tr>';
-      html += `<td><strong>#${row.rank}</strong></td>`;
+      const rankDisplay = medals[row.rank] || `#${row.rank}`;
+      html += `<td style="font-size:16px"><strong>${rankDisplay}</strong></td>`;
       html += `<td>${esc(row.name)}</td>`;
       for (const gn of groupNames) {
         html += `<td>${row.group_scores[gn] || 0}</td>`;
