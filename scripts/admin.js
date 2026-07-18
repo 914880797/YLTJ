@@ -197,7 +197,7 @@ async function handleGroupSmartImport() {
   const parts = val.split('|');
   const groupId = parts[0];
 
-  const names = namesText.split(/[,，、\n\r]+/).map(n => n.trim()).filter(n => n && !n.startsWith('-'));
+  const names = [...new Set(namesText.split(/[,，、\n\r]+/).map(n => n.trim()).filter(n => n && !n.startsWith('-')))];
   if (names.length === 0) { resultDiv.innerHTML = '<div class="import-result error">未识别到有效姓名</div>'; return; }
 
   resultDiv.innerHTML = `<div class="loading">正在导入 ${names.length} 人...</div>`;
@@ -854,7 +854,7 @@ async function handleRewardSmartImport() {
 
   if (!bindGroupId) { resultDiv.innerHTML = '<div class="import-result error">该奖励项目未绑定主分组</div>'; return; }
 
-  const names = namesText.split(/[,，、\n\r]+/).map(n => n.trim()).filter(n => n && !n.startsWith('-'));
+  const names = [...new Set(namesText.split(/[,，、\n\r]+/).map(n => n.trim()).filter(n => n && !n.startsWith('-')))];
   if (names.length === 0) { resultDiv.innerHTML = '<div class="import-result error">未识别到有效姓名</div>'; return; }
 
   resultDiv.innerHTML = `<div class="loading">正在导入 ${names.length} 人...</div>`;
@@ -1258,7 +1258,7 @@ async function handleWarmupSmartImport() {
 
   if (!bindGroupId) { resultDiv.innerHTML = '<div class="import-result error">该预热项目未绑定主分组</div>'; return; }
 
-  const names = namesText.split(/[,，、\n\r]+/).map(n => n.trim()).filter(n => n && !n.startsWith('-'));
+  const names = [...new Set(namesText.split(/[,，、\n\r]+/).map(n => n.trim()).filter(n => n && !n.startsWith('-')))];
   if (names.length === 0) { resultDiv.innerHTML = '<div class="import-result error">未识别到有效姓名</div>'; return; }
 
   resultDiv.innerHTML = `<div class="loading">正在导入 ${names.length} 人...</div>`;
