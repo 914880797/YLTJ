@@ -27,7 +27,7 @@ async function loadRankings() {
     const medals = { 1: '\u{1F947}', 2: '\u{1F948}', 3: '\u{1F949}' };
     for (const row of res.data) {
       html += '<tr>';
-      const rankDisplay = medals[row.rank] || `#${row.rank}`;
+      const rankDisplay = medals[row.rank] || row.rank;
       html += `<td style="font-size:16px"><strong>${rankDisplay}</strong></td>`;
       html += `<td>${esc(row.name)}</td>`;
       for (const gn of groupNames) {
