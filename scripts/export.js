@@ -21,9 +21,9 @@ async function loadExportPreview() {
     }
 
     let html = '<div class="card" style="overflow-x:auto"><table style="min-width:600px"><thead><tr>';
-    html += '<th style="position:sticky;left:0;z-index:2;background:#fff;min-width:80px">姓名</th>';
+    html += '<th style="position:sticky;left:0;top:0;z-index:2;background:#fff;min-width:80px">姓名</th>';
     for (const gn of groupNames) html += `<th style="min-width:90px">${esc(gn)}</th>`;
-    html += '<th style="position:sticky;right:0;z-index:2;background:#fff;min-width:70px">总分</th></tr></thead><tbody>';
+    html += '<th style="position:sticky;right:0;top:0;z-index:2;background:#fff;min-width:70px">总分</th></tr></thead><tbody>';
 
     for (const row of data) {
       html += '<tr>';
