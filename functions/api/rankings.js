@@ -41,7 +41,7 @@ export async function onRequestGet({ request, env }) {
       personTotalScores[gs.person_name] = (personTotalScores[gs.person_name] || 0) + gs.group_score;
     }
 
-    const data = Object.entries(personTotalScores)
+    const allData = Object.entries(personTotalScores)
       .sort((a, b) => b[1] - a[1])
       .map(([name, total], idx) => ({
         rank: idx + 1,
@@ -50,7 +50,9 @@ export async function onRequestGet({ request, env }) {
         total_score: total
       }));
 
-    return jsonSuccess({ data, total: data.length });
+    const data = name ? allData : allData.slice(0, 10);
+
+    return jsonSuccess({ data, total: data.length, allCount: allData.length });
   } catch (error) {
     return jsonError(error.message);
   }

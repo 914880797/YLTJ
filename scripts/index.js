@@ -37,7 +37,11 @@ async function loadRankings() {
       html += '</tr>';
     }
 
-    html += '</tbody></table></div>';
+    html += '</tbody></table>';
+    if (res.allCount > 10 && !name) {
+      html += `<p style="text-align:center;color:#999;font-size:12px;margin-top:8px">仅显示前 10 名（共 ${res.allCount} 人），搜索姓名可查找全部排名</p>`;
+    }
+    html += '</div>';
     container.innerHTML = html;
   } catch (e) {
     container.innerHTML = `<div class="empty">加载失败: ${e.message}</div>`;
