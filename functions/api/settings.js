@@ -2,7 +2,7 @@ import { jsonSuccess, jsonError, verifyAdmin } from './_shared.js';
 
 export async function onRequestGet({ env }) {
   try {
-    const announcements = await env.DB.prepare(
+    const row = await env.DB.prepare(
       `SELECT value FROM settings WHERE key = 'cycle_start_date'`
     ).first();
     const count = await env.DB.prepare(
@@ -10,7 +10,7 @@ export async function onRequestGet({ env }) {
     ).first();
 
     return jsonSuccess({
-      cycleStartDate: announcements?.value || null,
+      cycleStartDate: row?.value || null,
       totalRecords: count?.total || 0
     });
   } catch (error) {
@@ -24,9 +24,23 @@ export async function onRequestPut({ request, env }) {
   try {
     const data = await request.json();
     if (data.cycleStartDate) {
+      const { results } = await env.DB.prepare(
+        `SELECT value FROM settings WHERE key = 'cycle_start_date'`
+      ).all();
+      const oldValue = results?.[0]?.value;
+
+      const { meta } = await env.DB.prepare(
+        `DELETE FROM score_records`
+      ).run();
+
       await env.DB.prepare(
         `INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ('cycle_start_date', ?, CURRENT_TIMESTAMP)`
       ).bind(data.cycleStartDate).run();
+
+      return jsonSuccess({
+        message: `周期起始日期已更新，清除了 ${meta?.changes || 0} 条记录`,
+        deleted: meta?.changes || 0
+      });
     }
     return jsonSuccess();
   } catch (error) {

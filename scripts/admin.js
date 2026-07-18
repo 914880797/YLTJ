@@ -402,7 +402,12 @@ async function loadSettings() {
   let html = `
     <div class="card">
       <p>总记录数: <strong>${res.totalRecords || 0}</strong></p>
-      <p>周期起始日期: ${res.cycleStartDate || '未设置'}</p>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+        <span style="color:#666;font-size:13px">周期起始日期:</span>
+        <input type="date" id="cycleStartDate" class="form-input" style="width:180px;margin-bottom:0" value="${res.cycleStartDate || ''}">
+        <button class="btn btn-primary" onclick="saveCycleStartDate()">保存并重置数据</button>
+      </div>
+      <p style="color:#ef4444;font-size:11px;margin-top:6px">修改周期起始日期将清空所有智能导入的分数数据</p>
     </div>
     <div class="card" style="margin-top:12px">
       <h3 style="color:#333;margin-bottom:8px;font-size:15px">分组分值设置</h3>
@@ -419,6 +424,15 @@ async function loadSettings() {
 
   html += '</div>';
   container.innerHTML = html;
+}
+
+async function saveCycleStartDate() {
+  const input = document.getElementById('cycleStartDate');
+  if (!input || !input.value) return showToast('请选择日期', true);
+  if (!confirm(`确认将周期起始日期设为 ${input.value} 吗？\n\n此操作将清空所有已导入的分数数据，不可恢复。`)) return;
+  const res = await apiAuthPut('/settings', { cycleStartDate: input.value }, adminToken);
+  showToast(res.success ? (res.message || '设置已保存') : (res.error || '操作失败'), !res.success);
+  if (res.success) loadSettings();
 }
 
 async function updateGroupWeight(groupId) {
