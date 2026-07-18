@@ -1,5 +1,9 @@
 let allRecords = [];
 let currentView = 'list';
+let currentPage = 1;
+let totalPages = 1;
+let totalRecords = 0;
+const PAGE_SIZE = 50;
 
 function esc(s) {
   const div = document.createElement('div');
@@ -17,12 +21,15 @@ function showToast(msg, isError) {
   setTimeout(() => t.remove(), 2500);
 }
 
-async function loadRecords() {
+async function loadRecords(page) {
+  if (page !== undefined) currentPage = page;
+  else currentPage = 1;
+
   const name = document.getElementById('filterName').value.trim();
   const startDate = document.getElementById('filterStartDate').value;
   const endDate = document.getElementById('filterEndDate').value;
 
-  let path = '/records?';
+  let path = `/records?page=${currentPage}&page_size=${PAGE_SIZE}&`;
   if (name) path += `name=${encodeURIComponent(name)}&`;
   if (startDate) path += `start_date=${startDate}&`;
   if (endDate) path += `end_date=${endDate}&`;
@@ -30,7 +37,10 @@ async function loadRecords() {
   const res = await apiGet(path);
   if (!res.success) return;
   allRecords = res.data || [];
+  totalRecords = res.total || 0;
+  totalPages = Math.ceil(totalRecords / PAGE_SIZE) || 1;
   renderView();
+  renderPagination();
 }
 
 async function loadCrossTable() {
@@ -76,6 +86,7 @@ async function loadCrossTable() {
     }
     html += '</tbody></table>';
     container.innerHTML = html;
+    document.getElementById('paginationBar').innerHTML = '';
   } catch(e) {
     container.innerHTML = `<div class="empty">加载失败: ${e.message}</div>`;
   }
@@ -116,14 +127,30 @@ function renderView() {
   }
   html += '</tbody></table>';
   container.innerHTML = html;
+  container.scrollTop = 0;
+}
+
+function renderPagination() {
+  const bar = document.getElementById('paginationBar');
+  if (!bar || totalPages <= 1) { if (bar) bar.innerHTML = ''; return; }
+
+  let html = `<span>共 ${totalRecords} 条</span>`;
+  html += `<button class="btn btn-outline" style="font-size:11px;padding:3px 10px" onclick="loadRecords(1)" ${currentPage === 1 ? 'disabled' : ''}>首页</button>`;
+  html += `<button class="btn btn-outline" style="font-size:11px;padding:3px 10px" onclick="loadRecords(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>上一页</button>`;
+  html += `<span>${currentPage} / ${totalPages}</span>`;
+  html += `<button class="btn btn-outline" style="font-size:11px;padding:3px 10px" onclick="loadRecords(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>下一页</button>`;
+  html += `<button class="btn btn-outline" style="font-size:11px;padding:3px 10px" onclick="loadRecords(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''}>末页</button>`;
+
+  bar.innerHTML = html;
 }
 
 function switchView(view) {
   currentView = view;
+  currentPage = 1;
   document.getElementById('btnList').classList.toggle('active', view === 'list');
   document.getElementById('btnCross').classList.toggle('active', view === 'cross');
   if (view === 'cross') loadCrossTable();
-  else renderView();
+  else loadRecords(1);
 }
 
 async function editRecord(id, currentScore) {
@@ -133,7 +160,7 @@ async function editRecord(id, currentScore) {
   if (!token) return showToast('请先登录管理员', true);
   const res = await apiAuthPut('/records', { id, score: parseFloat(score) || 0 }, token);
   showToast(res.success ? '记录已更新' : (res.error || '操作失败'), !res.success);
-  if (res.success) loadRecords();
+  if (res.success) loadRecords(currentPage);
 }
 
 async function deleteRecord(id) {
@@ -142,12 +169,16 @@ async function deleteRecord(id) {
   if (!token) return showToast('请先登录管理员', true);
   const res = await apiAuthDelete('/records', { id }, token);
   showToast(res.success ? '记录已删除' : (res.error || '操作失败'), !res.success);
-  if (res.success) loadRecords();
+  if (res.success) loadRecords(currentPage);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('filterName').addEventListener('input', loadRecords);
-  document.getElementById('filterStartDate').addEventListener('change', loadRecords);
-  document.getElementById('filterEndDate').addEventListener('change', loadRecords);
-  loadRecords();
+  let timer;
+  document.getElementById('filterName').addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => loadRecords(1), 300);
+  });
+  document.getElementById('filterStartDate').addEventListener('change', () => loadRecords(1));
+  document.getElementById('filterEndDate').addEventListener('change', () => loadRecords(1));
+  loadRecords(1);
 });

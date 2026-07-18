@@ -12,24 +12,34 @@ export async function onRequestGet({ request, env }) {
     const slotId = url.searchParams.get('slot_id');
     const startDate = url.searchParams.get('start_date');
     const endDate = url.searchParams.get('end_date');
+    const page = parseInt(url.searchParams.get('page')) || 1;
+    const pageSize = Math.min(parseInt(url.searchParams.get('page_size')) || 50, 200);
+    const offset = (page - 1) * pageSize;
+
+    let where = '1=1';
+    const args = [];
+
+    if (name) { where += ' AND sr.person_name LIKE ?'; args.push(`%${name}%`); }
+    if (groupId) { where += ' AND sr.group_id = ?'; args.push(groupId); }
+    if (slotId) { where += ' AND sr.slot_id = ?'; args.push(slotId); }
+    if (startDate) { where += ' AND sr.record_date >= ?'; args.push(startDate); }
+    if (endDate) { where += ' AND sr.record_date <= ?'; args.push(endDate); }
+
+    const { results: countResult } = await env.DB.prepare(
+      `SELECT COUNT(*) as total FROM score_records sr WHERE ${where}`
+    ).bind(...args).all();
+    const total = countResult?.[0]?.total || 0;
 
     let sql = `SELECT sr.*, g.name as group_name, ts.name as slot_name, ts.time_range
                FROM score_records sr
                LEFT JOIN groups g ON sr.group_id = g.id
                LEFT JOIN time_slots ts ON sr.slot_id = ts.id
-               WHERE 1=1`;
-    const args = [];
+               WHERE ${where}
+               ORDER BY sr.record_date DESC, sr.created_at DESC
+               LIMIT ? OFFSET ?`;
 
-    if (name) { sql += ` AND sr.person_name LIKE ?`; args.push(`%${name}%`); }
-    if (groupId) { sql += ` AND sr.group_id = ?`; args.push(groupId); }
-    if (slotId) { sql += ` AND sr.slot_id = ?`; args.push(slotId); }
-    if (startDate) { sql += ` AND sr.record_date >= ?`; args.push(startDate); }
-    if (endDate) { sql += ` AND sr.record_date <= ?`; args.push(endDate); }
-
-    sql += ` ORDER BY sr.record_date DESC, sr.created_at DESC`;
-
-    const { results } = await env.DB.prepare(sql).bind(...args).all();
-    return jsonSuccess({ data: results || [] });
+    const { results } = await env.DB.prepare(sql).bind(...args, pageSize, offset).all();
+    return jsonSuccess({ data: results || [], total, page, page_size: pageSize });
   } catch (error) {
     return jsonError(error.message);
   }
