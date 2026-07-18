@@ -20,7 +20,7 @@ async function loadExportPreview() {
       return;
     }
 
-    let html = '<div class="card" style="overflow-x:auto"><table style="min-width:600px"><thead><tr>';
+    let html = '<table style="min-width:600px"><thead><tr>';
     html += '<th style="position:sticky;left:0;top:0;z-index:2;background:#fff;min-width:80px">姓名</th>';
     for (const gn of groupNames) html += `<th style="min-width:90px">${esc(gn)}</th>`;
     html += '<th style="position:sticky;right:0;top:0;z-index:2;background:#fff;min-width:70px">总分</th></tr></thead><tbody>';
@@ -33,7 +33,7 @@ async function loadExportPreview() {
       html += '</tr>';
     }
 
-    html += '</tbody></table></div>';
+    html += '</tbody></table>';
     container.innerHTML = html;
   } catch(e) {
     container.innerHTML = `<div class="empty">加载失败: ${e.message}</div>`;
