@@ -222,7 +222,7 @@ async function handleGroupSmartImport() {
 async function showAddGroup() {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
-  overlay.style.display = 'block';
+  overlay.style.display = 'flex';
   overlay.innerHTML = `<div class="modal" style="max-width:350px">
     <h3 style="color:#333;margin:0 0 10px;font-size:15px">添加分组</h3>
     <div class="form-group">
@@ -253,7 +253,7 @@ async function addGroupFromModal() {
 async function editGroup(id, oldName, oldOrder, oldHasSlots) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
-  overlay.style.display = 'block';
+  overlay.style.display = 'flex';
   overlay.innerHTML = `<div class="modal" style="max-width:350px">
     <h3 style="color:#333;margin:0 0 10px;font-size:15px">编辑分组</h3>
     <div class="form-group">
@@ -531,7 +531,7 @@ async function showAddDutyProject() {
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
-  overlay.style.display = 'block';
+  overlay.style.display = 'flex';
   overlay.innerHTML = `<div class="modal" style="max-width:350px">
     <h3 style="color:#333;margin:0 0 10px;font-size:15px">添加值班项目</h3>
     <div class="form-group">
@@ -569,7 +569,7 @@ async function editDutyProject(id, oldName, oldBindGroupId) {
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
-  overlay.style.display = 'block';
+  overlay.style.display = 'flex';
   overlay.innerHTML = `<div class="modal" style="max-width:350px">
     <h3 style="color:#333;margin:0 0 10px;font-size:15px">编辑值班项目</h3>
     <div class="form-group">
@@ -606,7 +606,7 @@ async function deleteDutyProject(id) {
 async function showAddDutyGroup(dutyProjectId) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
-  overlay.style.display = 'block';
+  overlay.style.display = 'flex';
   overlay.innerHTML = `<div class="modal" style="max-width:350px">
     <h3 style="color:#333;margin:0 0 10px;font-size:15px">添加值班分组</h3>
     <div class="form-group">
@@ -631,7 +631,7 @@ async function addDutyGroupFromModal(dutyProjectId) {
 async function editDutyGroup(id, currentName) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
-  overlay.style.display = 'block';
+  overlay.style.display = 'flex';
   overlay.innerHTML = `<div class="modal" style="max-width:350px">
     <h3 style="color:#333;margin:0 0 10px;font-size:15px">编辑值班分组</h3>
     <div class="form-group">
@@ -690,7 +690,7 @@ async function addDutySlotPerson(dutyGroupId) {
 async function editDutySlotPerson(id, currentPersons) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
-  overlay.style.display = 'block';
+  overlay.style.display = 'flex';
   overlay.innerHTML = `<div class="modal" style="max-width:400px">
     <h3 style="color:#333;margin:0 0 10px;font-size:15px">修改人员</h3>
     <div class="form-group">
@@ -760,7 +760,7 @@ async function handleAutoScore() {
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
-  overlay.style.display = 'block';
+  overlay.style.display = 'flex';
   overlay.innerHTML = html;
   document.body.appendChild(overlay);
   resultDiv.innerHTML = '';
@@ -900,7 +900,7 @@ async function showAddRewardProject() {
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
-  overlay.style.display = 'block';
+  overlay.style.display = 'flex';
   overlay.innerHTML = `<div class="modal" style="max-width:350px">
     <h3 style="color:#333;margin:0 0 10px;font-size:15px">添加奖励项目</h3>
     <div class="form-group">
@@ -947,7 +947,7 @@ async function editRewardProject(id, oldName, oldBindGroupId) {
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
-  overlay.style.display = 'block';
+  overlay.style.display = 'flex';
   overlay.innerHTML = `<div class="modal" style="max-width:350px">
     <h3 style="color:#333;margin:0 0 10px;font-size:15px">编辑奖励项目</h3>
     <div class="form-group">
@@ -1016,7 +1016,7 @@ async function addRewardSlotPerson(rewardProjectId) {
 async function editRewardSlotPerson(id, currentPersons) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
-  overlay.style.display = 'block';
+  overlay.style.display = 'flex';
   overlay.innerHTML = `<div class="modal" style="max-width:400px">
     <h3 style="color:#333;margin:0 0 10px;font-size:15px">修改人员</h3>
     <div class="form-group">
@@ -1086,7 +1086,7 @@ async function handleRewardAutoScore() {
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
-  overlay.style.display = 'block';
+  overlay.style.display = 'flex';
   overlay.innerHTML = html;
   document.body.appendChild(overlay);
   resultDiv.innerHTML = '';
@@ -1305,7 +1305,7 @@ async function showAddWarmupProject() {
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
-  overlay.style.display = 'block';
+  overlay.style.display = 'flex';
   overlay.innerHTML = `<div class="modal" style="max-width:350px">
     <h3 style="color:#333;margin:0 0 10px;font-size:15px">添加预热项目</h3>
     <div class="form-group">
@@ -1343,7 +1343,7 @@ async function editWarmupProject(id, oldName, oldBindGroupId) {
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
-  overlay.style.display = 'block';
+  overlay.style.display = 'flex';
   overlay.innerHTML = `<div class="modal" style="max-width:350px">
     <h3 style="color:#333;margin:0 0 10px;font-size:15px">编辑预热项目</h3>
     <div class="form-group">
@@ -1380,7 +1380,7 @@ async function deleteWarmupProject(id) {
 async function showAddWarmupGroup(wpId) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
-  overlay.style.display = 'block';
+  overlay.style.display = 'flex';
   overlay.innerHTML = `<div class="modal" style="max-width:350px">
     <h3 style="color:#333;margin:0 0 10px;font-size:15px">添加预热分组</h3>
     <div class="form-group">
@@ -1405,7 +1405,7 @@ async function addWarmupGroupFromModal(wpId) {
 function editWarmupGroup(id, oldName) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
-  overlay.style.display = 'block';
+  overlay.style.display = 'flex';
   overlay.innerHTML = `<div class="modal" style="max-width:350px">
     <h3 style="color:#333;margin:0 0 10px;font-size:15px">编辑预热分组</h3>
     <div class="form-group">
