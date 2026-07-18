@@ -17,25 +17,21 @@ async function loadRankings() {
       return;
     }
 
-    let html = '<table><thead><tr>';
-    html += '<th>排名</th><th>姓名</th>';
-    for (const gn of groupNames) {
-      html += `<th>${gn}</th>`;
-    }
-    html += '<th>总分</th></tr></thead><tbody>';
-
+    let html = '';
     for (const row of res.data) {
-      html += '<tr>';
-      html += `<td><strong>#${row.rank}</strong></td>`;
-      html += `<td>${esc(row.name)}</td>`;
+      html += '<div class="card ranking-card" style="display:flex;align-items:center;gap:16px;padding:14px 20px;margin-bottom:10px">';
+      html += `<div style="font-size:18px;font-weight:700;color:#4a6cf7;min-width:42px">#${row.rank}</div>`;
+      html += '<div style="flex:1">';
+      html += `<div style="font-weight:600;font-size:15px;margin-bottom:6px">${esc(row.name)}</div>`;
+      html += '<div style="display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:#555">';
       for (const gn of groupNames) {
-        html += `<td>${row.group_scores[gn] || 0}</td>`;
+        html += `<span>${gn}: <strong>${row.group_scores[gn] || 0}</strong></span>`;
       }
-      html += `<td><strong>${row.total_score}</strong></td>`;
-      html += '</tr>';
+      html += '</div>';
+      html += '</div>';
+      html += `<div style="font-size:22px;font-weight:700;color:#4a6cf7;text-align:right;min-width:60px">${row.total_score}</div>`;
+      html += '</div>';
     }
-
-    html += '</tbody></table>';
     container.innerHTML = html;
   } catch (e) {
     container.innerHTML = `<div class="empty">加载失败: ${e.message}</div>`;
