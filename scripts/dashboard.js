@@ -21,9 +21,9 @@ async function loadDashboard() {
     statsHtml += '</div>';
 
     if (res.group_averages && res.group_averages.length > 0) {
-      statsHtml += '<div class="card" style="margin-top:12px"><h3 style="color:#fff;margin-bottom:8px;font-size:15px">分组平均完成时段数</h3>';
+      statsHtml += '<div class="card" style="margin-top:12px"><h3 style="color:#333;margin-bottom:8px;font-size:15px">分组平均完成时段数</h3>';
       for (const ga of res.group_averages) {
-        statsHtml += `<p style="color:#b0b0c0;font-size:13px">${esc(ga.group_name)}: <strong>${ga.avg_slots}</strong></p>`;
+        statsHtml += `<p style="color:#666;font-size:13px">${esc(ga.group_name)}: <strong>${ga.avg_slots}</strong></p>`;
       }
       statsHtml += '</div>';
     }
@@ -31,7 +31,7 @@ async function loadDashboard() {
     statsEl.innerHTML = statsHtml;
 
     if (res.missing_slots && res.missing_slots.length > 0) {
-      let html = '<div class="card"><h3 style="color:#fff;margin-bottom:8px;font-size:15px">缺卡人员</h3>';
+      let html = '<div class="card"><h3 style="color:#333;margin-bottom:8px;font-size:15px">缺卡人员</h3>';
       html += '<table><thead><tr><th>姓名</th><th>已完成</th><th>缺失</th></tr></thead><tbody>';
       for (const m of res.missing_slots) {
         html += `<tr><td>${esc(m.name)}</td><td>${m.done}</td><td style="color:#ef4444">${m.missing}</td></tr>`;

@@ -86,7 +86,7 @@ async function loadGroups() {
       <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleGroupProject('${projectKey}')">
         <div>
           <span id="${projectKey}_arrow" data-group-project style="color:#888;font-size:12px;margin-right:6px">&#9654;</span>
-          <h3 style="color:#fff;font-size:14px;margin:0;display:inline">${esc(g.name)}</h3>
+          <h3 style="color:#333;font-size:14px;margin:0;display:inline">${esc(g.name)}</h3>
           <span style="color:#f7a44a;font-size:11px;margin-left:8px">权重 ${g.score_weight || 1}</span>
           ${g.has_slots !== 0 ? `<span style="color:#888;font-size:11px;margin-left:8px">${g.slot_count || 0} 个时段</span>` : ''}
         </div>
@@ -98,9 +98,9 @@ async function loadGroups() {
           <button class="btn-danger" onclick="event.stopPropagation();deleteGroup(${g.id})" style="font-size:11px;padding:3px 8px">删除</button>
         </div>
       </div>
-      <div id="${projectKey}_body" data-group-project style="display:none;margin-top:8px;border-top:1px solid #333;padding-top:8px">${
+      <div id="${projectKey}_body" data-group-project style="display:none;margin-top:8px;border-top:1px solid #ddd;padding-top:8px">${
         allSlots.filter(s => s.group_id == g.id && (!s.source || s.source === 'groups')).length > 0
-          ? allSlots.filter(s => s.group_id == g.id && (!s.source || s.source === 'groups')).map(s => `<span style="display:inline-block;background:#1a1a2e;color:#b0b0c0;font-size:12px;padding:2px 8px;border-radius:3px;margin:2px 4px 2px 0">${esc(s.time_range || s.name)}</span>`).join('')
+          ? allSlots.filter(s => s.group_id == g.id && (!s.source || s.source === 'groups')).map(s => `<span style="display:inline-block;background:#f0f0f0;color:#666;font-size:12px;padding:2px 8px;border-radius:3px;margin:2px 4px 2px 0">${esc(s.time_range || s.name)}</span>`).join('')
           : '<span style="color:#888;font-size:12px">暂无时段</span>'
       }</div></div>`;
   }
@@ -108,7 +108,7 @@ async function loadGroups() {
   html += '</div>';
 
   html += `<div class="card" style="flex:1;min-width:340px;">
-    <h3 style="color:#fff;margin:0 0 12px;font-size:15px">智能导入</h3>
+    <h3 style="color:#333;margin:0 0 12px;font-size:15px">智能导入</h3>
     <p style="color:#888;font-size:12px;margin-bottom:12px">选择分组和时段，粘贴人员名单直接导入计分</p>
     <div style="display:flex;gap:8px;margin-bottom:12px">
       <div class="form-group" style="flex:1;margin-bottom:0">
@@ -224,7 +224,7 @@ async function showAddGroup() {
   overlay.className = 'modal-overlay';
   overlay.style.display = 'block';
   overlay.innerHTML = `<div class="modal" style="max-width:350px">
-    <h3 style="color:#fff;margin:0 0 10px;font-size:15px">添加分组</h3>
+    <h3 style="color:#333;margin:0 0 10px;font-size:15px">添加分组</h3>
     <div class="form-group">
       <label>分组名称</label>
       <input type="text" id="newGroupName" class="form-input" placeholder="如: 分组A">
@@ -255,7 +255,7 @@ async function editGroup(id, oldName, oldOrder, oldHasSlots) {
   overlay.className = 'modal-overlay';
   overlay.style.display = 'block';
   overlay.innerHTML = `<div class="modal" style="max-width:350px">
-    <h3 style="color:#fff;margin:0 0 10px;font-size:15px">编辑分组</h3>
+    <h3 style="color:#333;margin:0 0 10px;font-size:15px">编辑分组</h3>
     <div class="form-group">
       <label>分组名称</label>
       <input type="text" id="editGroupName" class="form-input" value="${esc(oldName)}">
@@ -405,14 +405,14 @@ async function loadSettings() {
       <p>周期起始日期: ${res.cycleStartDate || '未设置'}</p>
     </div>
     <div class="card" style="margin-top:12px">
-      <h3 style="color:#fff;margin-bottom:8px;font-size:15px">分组分值设置</h3>
+      <h3 style="color:#333;margin-bottom:8px;font-size:15px">分组分值设置</h3>
       <p style="color:#888;font-size:12px;margin-bottom:8px">每个分组的打卡位数据计数后乘以此分值</p>
   `;
 
   for (const g of groups) {
     html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-      <span style="color:#b0b0c0;font-size:13px;min-width:80px">${esc(g.name)}</span>
-      <input type="number" id="groupWeight_${g.id}" value="${g.score_weight || 1}" step="0.1" min="0" style="width:80px;padding:4px 8px;background:#1a1a2e;border:1px solid #333;border-radius:4px;color:#fff;font-size:13px">
+      <span style="color:#666;font-size:13px;min-width:80px">${esc(g.name)}</span>
+      <input type="number" id="groupWeight_${g.id}" value="${g.score_weight || 1}" step="0.1" min="0" style="width:80px;padding:4px 8px;background:#f0f0f0;border:1px solid #ddd;border-radius:4px;color:#333;font-size:13px">
       <button class="btn btn-outline" style="font-size:11px;padding:3px 10px" onclick="updateGroupWeight(${g.id})">保存</button>
     </div>`;
   }
@@ -463,7 +463,7 @@ async function loadDuty() {
     html += `<div class="duty-project card" style="margin-bottom:8px">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div>
-          <h3 style="color:#fff;font-size:14px;margin:0;display:inline">${esc(dp.name)}</h3>
+          <h3 style="color:#333;font-size:14px;margin:0;display:inline">${esc(dp.name)}</h3>
           ${dp.bind_group_name ? `<span style="color:#888;font-size:11px;margin-left:8px">绑定: ${esc(dp.bind_group_name)}</span>` : ''}
         </div>
         <div>
@@ -471,10 +471,10 @@ async function loadDuty() {
           <button onclick="deleteDutyProject(${dp.id})" class="btn-danger" style="font-size:11px;padding:3px 8px">删除</button>
         </div>
       </div>
-      <hr style="border-color:#333;margin:8px 0">`;
+      <hr style="border-color:#ddd;margin:8px 0">`;
 
     for (const dg of dpd.groups) {
-      html += `<div class="duty-group-item" style="margin-bottom:6px;padding:8px;background:#1a1a2e;border-radius:4px">
+      html += `<div class="duty-group-item" style="margin-bottom:6px;padding:8px;background:#f0f0f0;border-radius:4px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <span style="color:#4a6cf7;font-weight:600;font-size:13px">${esc(dg.name || '未命名')}</span>
           <div>
@@ -484,8 +484,8 @@ async function loadDuty() {
         </div>`;
 
       for (const sp of (dg.slots || [])) {
-        html += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:12px;color:#b0b0c0">
-          <span style="flex:1;color:#fff">${esc(sp.persons || '')}</span>
+        html += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:12px;color:#666">
+          <span style="flex:1;color:#333">${esc(sp.persons || '')}</span>
           <button onclick="editDutySlotPerson(${sp.id},'${esc(sp.persons || '')}')" style="font-size:10px;padding:2px 6px">编辑</button>
           <button onclick="deleteDutySlotPerson(${sp.id})" class="btn-danger" style="font-size:10px;padding:2px 6px">删除</button>
         </div>`;
@@ -519,7 +519,7 @@ async function showAddDutyProject() {
   overlay.className = 'modal-overlay';
   overlay.style.display = 'block';
   overlay.innerHTML = `<div class="modal" style="max-width:350px">
-    <h3 style="color:#fff;margin:0 0 10px;font-size:15px">添加值班项目</h3>
+    <h3 style="color:#333;margin:0 0 10px;font-size:15px">添加值班项目</h3>
     <div class="form-group">
       <label>项目名称（如"会议"、"电报"）</label>
       <input type="text" id="newDutyProjectName" class="form-input" placeholder="会议">
@@ -557,7 +557,7 @@ async function editDutyProject(id, oldName, oldBindGroupId) {
   overlay.className = 'modal-overlay';
   overlay.style.display = 'block';
   overlay.innerHTML = `<div class="modal" style="max-width:350px">
-    <h3 style="color:#fff;margin:0 0 10px;font-size:15px">编辑值班项目</h3>
+    <h3 style="color:#333;margin:0 0 10px;font-size:15px">编辑值班项目</h3>
     <div class="form-group">
       <label>项目名称</label>
       <input type="text" id="editDutyProjectName" class="form-input" value="${esc(oldName)}">
@@ -594,7 +594,7 @@ async function showAddDutyGroup(dutyProjectId) {
   overlay.className = 'modal-overlay';
   overlay.style.display = 'block';
   overlay.innerHTML = `<div class="modal" style="max-width:350px">
-    <h3 style="color:#fff;margin:0 0 10px;font-size:15px">添加值班分组</h3>
+    <h3 style="color:#333;margin:0 0 10px;font-size:15px">添加值班分组</h3>
     <div class="form-group">
       <label>分组名称</label>
       <input type="text" id="newDutyGroupName" class="form-input" placeholder="如: 分组A">
@@ -619,7 +619,7 @@ async function editDutyGroup(id, currentName) {
   overlay.className = 'modal-overlay';
   overlay.style.display = 'block';
   overlay.innerHTML = `<div class="modal" style="max-width:350px">
-    <h3 style="color:#fff;margin:0 0 10px;font-size:15px">编辑值班分组</h3>
+    <h3 style="color:#333;margin:0 0 10px;font-size:15px">编辑值班分组</h3>
     <div class="form-group">
       <label>分组名称</label>
       <input type="text" id="editDutyGroupName" class="form-input" value="${esc(currentName)}">
@@ -678,7 +678,7 @@ async function editDutySlotPerson(id, currentPersons) {
   overlay.className = 'modal-overlay';
   overlay.style.display = 'block';
   overlay.innerHTML = `<div class="modal" style="max-width:400px">
-    <h3 style="color:#fff;margin:0 0 10px;font-size:15px">修改人员</h3>
+    <h3 style="color:#333;margin:0 0 10px;font-size:15px">修改人员</h3>
     <div class="form-group">
       <label>人员名单（逗号/顿号/换行分隔，名前加 - 排除：-张三）</label>
       <textarea id="editPersons_${id}" class="form-input" rows="3">${esc(currentPersons)}</textarea>
@@ -724,7 +724,7 @@ async function handleAutoScore() {
   }
 
   let html = `<div class="modal" style="max-width:500px;max-height:70vh;overflow-y:auto">
-    <h3 style="color:#fff;margin:0 0 8px;font-size:15px">加分确认 - ${date || '今天'}</h3>
+    <h3 style="color:#333;margin:0 0 8px;font-size:15px">加分确认 - ${date || '今天'}</h3>
     <p style="color:#4caf50;font-size:13px;margin-bottom:8px">将加分 <strong>${preview.activeCount}</strong> 人</p>`;
 
   if (preview.excluded && preview.excluded.length > 0) {
@@ -798,7 +798,7 @@ async function loadReward() {
     html += `<div class="duty-project card" style="margin-bottom:8px">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div>
-          <h3 style="color:#fff;font-size:14px;margin:0;display:inline">${esc(rp.name)}</h3>
+          <h3 style="color:#333;font-size:14px;margin:0;display:inline">${esc(rp.name)}</h3>
           ${rp.bind_group_name ? `<span style="color:#888;font-size:11px;margin-left:8px">绑定: ${esc(rp.bind_group_name)}</span>` : '<span style="color:#ef4444;font-size:11px;margin-left:8px">未绑定</span>'}
           <span style="color:#f7a44a;font-size:11px;margin-left:8px">每人记${rp.score_weight || 1}分</span>
         </div>
@@ -812,7 +812,7 @@ async function loadReward() {
   html += '</div>';
 
   html += `<div class="card" style="flex:1;min-width:340px;">
-    <h3 style="color:#fff;margin:0 0 12px;font-size:15px">智能导入</h3>
+    <h3 style="color:#333;margin:0 0 12px;font-size:15px">智能导入</h3>
     <p style="color:#888;font-size:12px;margin-bottom:12px">选择奖励项目，粘贴人员名单直接导入计分</p>
     <div class="form-group">
       <label>选择奖励项目</label>
@@ -888,7 +888,7 @@ async function showAddRewardProject() {
   overlay.className = 'modal-overlay';
   overlay.style.display = 'block';
   overlay.innerHTML = `<div class="modal" style="max-width:350px">
-    <h3 style="color:#fff;margin:0 0 10px;font-size:15px">添加奖励项目</h3>
+    <h3 style="color:#333;margin:0 0 10px;font-size:15px">添加奖励项目</h3>
     <div class="form-group">
       <label>项目名称（如"优秀个人"、"突出贡献"）</label>
       <input type="text" id="newRewardProjectName" class="form-input" placeholder="优秀个人">
@@ -935,7 +935,7 @@ async function editRewardProject(id, oldName, oldBindGroupId) {
   overlay.className = 'modal-overlay';
   overlay.style.display = 'block';
   overlay.innerHTML = `<div class="modal" style="max-width:350px">
-    <h3 style="color:#fff;margin:0 0 10px;font-size:15px">编辑奖励项目</h3>
+    <h3 style="color:#333;margin:0 0 10px;font-size:15px">编辑奖励项目</h3>
     <div class="form-group">
       <label>项目名称</label>
       <input type="text" id="editRewardProjectName" class="form-input" value="${esc(oldName)}">
@@ -1004,7 +1004,7 @@ async function editRewardSlotPerson(id, currentPersons) {
   overlay.className = 'modal-overlay';
   overlay.style.display = 'block';
   overlay.innerHTML = `<div class="modal" style="max-width:400px">
-    <h3 style="color:#fff;margin:0 0 10px;font-size:15px">修改人员</h3>
+    <h3 style="color:#333;margin:0 0 10px;font-size:15px">修改人员</h3>
     <div class="form-group">
       <label>人员名单（逗号/顿号/换行分隔，名前加 - 排除：-张三）</label>
       <textarea id="editRewardPersons_${id}" class="form-input" rows="3">${esc(currentPersons)}</textarea>
@@ -1050,7 +1050,7 @@ async function handleRewardAutoScore() {
   }
 
   let html = `<div class="modal" style="max-width:500px;max-height:70vh;overflow-y:auto">
-    <h3 style="color:#fff;margin:0 0 8px;font-size:15px">奖励加分确认 - ${date || '今天'}</h3>
+    <h3 style="color:#333;margin:0 0 8px;font-size:15px">奖励加分确认 - ${date || '今天'}</h3>
     <p style="color:#4caf50;font-size:13px;margin-bottom:8px">将加分 <strong>${preview.activeCount}</strong> 人</p>`;
 
   if (preview.excluded && preview.excluded.length > 0) {
@@ -1130,7 +1130,7 @@ async function loadWarmup() {
       <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleWarmupProject('${projectKey}')">
         <div>
           <span id="${projectKey}_arrow" data-warmup-project style="color:#888;font-size:12px;margin-right:6px">&#9654;</span>
-          <h3 style="color:#fff;font-size:14px;margin:0;display:inline">${esc(wp.name)}</h3>
+          <h3 style="color:#333;font-size:14px;margin:0;display:inline">${esc(wp.name)}</h3>
           ${wp.bind_group_name ? `<span style="color:#888;font-size:11px;margin-left:8px">绑定: ${esc(wp.bind_group_name)}</span>` : '<span style="color:#ef4444;font-size:11px;margin-left:8px">未绑定</span>'}
         </div>
         <div>
@@ -1138,10 +1138,10 @@ async function loadWarmup() {
           <button onclick="event.stopPropagation();deleteWarmupProject(${wp.id})" class="btn-danger" style="font-size:11px;padding:3px 8px">删除</button>
         </div>
       </div>
-      <div id="${projectKey}_body" data-warmup-project style="display:none;margin-top:8px;border-top:1px solid #333;padding-top:8px">`;
+      <div id="${projectKey}_body" data-warmup-project style="display:none;margin-top:8px;border-top:1px solid #ddd;padding-top:8px">`;
 
     for (const wg of wpd.groups) {
-      html += `<div class="duty-group-item" style="margin-bottom:6px;padding:8px;background:#1a1a2e;border-radius:4px">
+      html += `<div class="duty-group-item" style="margin-bottom:6px;padding:8px;background:#f0f0f0;border-radius:4px">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <span style="color:#4a6cf7;font-weight:600;font-size:13px">${esc(wg.name || '未命名')}</span>
           <div>
@@ -1160,7 +1160,7 @@ async function loadWarmup() {
   html += '</div>';
 
   html += `<div class="card" style="flex:1;min-width:340px;">
-    <h3 style="color:#fff;margin:0 0 12px;font-size:15px">智能导入</h3>
+    <h3 style="color:#333;margin:0 0 12px;font-size:15px">智能导入</h3>
     <p style="color:#888;font-size:12px;margin-bottom:12px">选择预热项目和分组，粘贴人员名单直接导入计分</p>
     <div style="display:flex;gap:8px;margin-bottom:12px">
       <div class="form-group" style="flex:1;margin-bottom:0">
@@ -1293,7 +1293,7 @@ async function showAddWarmupProject() {
   overlay.className = 'modal-overlay';
   overlay.style.display = 'block';
   overlay.innerHTML = `<div class="modal" style="max-width:350px">
-    <h3 style="color:#fff;margin:0 0 10px;font-size:15px">添加预热项目</h3>
+    <h3 style="color:#333;margin:0 0 10px;font-size:15px">添加预热项目</h3>
     <div class="form-group">
       <label>项目名称</label>
       <input type="text" id="newWarmupProjectName" class="form-input" placeholder="如: 晨练">
@@ -1331,7 +1331,7 @@ async function editWarmupProject(id, oldName, oldBindGroupId) {
   overlay.className = 'modal-overlay';
   overlay.style.display = 'block';
   overlay.innerHTML = `<div class="modal" style="max-width:350px">
-    <h3 style="color:#fff;margin:0 0 10px;font-size:15px">编辑预热项目</h3>
+    <h3 style="color:#333;margin:0 0 10px;font-size:15px">编辑预热项目</h3>
     <div class="form-group">
       <label>项目名称</label>
       <input type="text" id="editWarmupProjectName" class="form-input" value="${esc(oldName)}">
@@ -1368,7 +1368,7 @@ async function showAddWarmupGroup(wpId) {
   overlay.className = 'modal-overlay';
   overlay.style.display = 'block';
   overlay.innerHTML = `<div class="modal" style="max-width:350px">
-    <h3 style="color:#fff;margin:0 0 10px;font-size:15px">添加预热分组</h3>
+    <h3 style="color:#333;margin:0 0 10px;font-size:15px">添加预热分组</h3>
     <div class="form-group">
       <label>分组名称</label>
       <input type="text" id="newWarmupGroupName" class="form-input" placeholder="如: 小组A">
@@ -1393,7 +1393,7 @@ function editWarmupGroup(id, oldName) {
   overlay.className = 'modal-overlay';
   overlay.style.display = 'block';
   overlay.innerHTML = `<div class="modal" style="max-width:350px">
-    <h3 style="color:#fff;margin:0 0 10px;font-size:15px">编辑预热分组</h3>
+    <h3 style="color:#333;margin:0 0 10px;font-size:15px">编辑预热分组</h3>
     <div class="form-group">
       <label>分组名称</label>
       <input type="text" id="editWarmupGroupName" class="form-input" value="${esc(oldName)}">
