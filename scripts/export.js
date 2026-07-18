@@ -20,20 +20,20 @@ async function loadExportPreview() {
       return;
     }
 
-    let html = '<table><thead><tr>';
-    html += '<th>姓名</th>';
-    for (const gn of groupNames) html += `<th>${esc(gn)}</th>`;
-    html += '<th>总分</th></tr></thead><tbody>';
+    let html = '<div class="card" style="overflow-x:auto"><table style="min-width:600px"><thead><tr>';
+    html += '<th style="position:sticky;left:0;z-index:2;background:#fff;min-width:80px">姓名</th>';
+    for (const gn of groupNames) html += `<th style="min-width:90px">${esc(gn)}</th>`;
+    html += '<th style="position:sticky;right:0;z-index:2;background:#fff;min-width:70px">总分</th></tr></thead><tbody>';
 
     for (const row of data) {
       html += '<tr>';
-      html += `<td>${esc(row.name)}</td>`;
+      html += `<td style="position:sticky;left:0;z-index:1;background:#fff">${esc(row.name)}</td>`;
       for (const gn of groupNames) html += `<td>${row.group_scores[gn] || 0}</td>`;
-      html += `<td><strong>${row.total_score}</strong></td>`;
+      html += `<td style="position:sticky;right:0;z-index:1;background:#fff"><strong>${row.total_score}</strong></td>`;
       html += '</tr>';
     }
 
-    html += '</tbody></table>';
+    html += '</tbody></table></div>';
     container.innerHTML = html;
   } catch(e) {
     container.innerHTML = `<div class="empty">加载失败: ${e.message}</div>`;
