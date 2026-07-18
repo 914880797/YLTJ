@@ -21,8 +21,9 @@
       <a href="/admin.html" class="back-btn">管理后台</a>
     </div>
 
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;align-items:center">
       <button class="btn btn-primary" onclick="exportRankings()">导出排名 Excel</button>
+      <input type="text" id="exportSearch" class="form-input" placeholder="搜索姓名定位..." style="width:200px;margin-bottom:0" oninput="filterExportTable()">
     </div>
 
     <div id="exportContent" style="height:0;flex-grow:1;overflow:auto">

@@ -26,7 +26,7 @@ async function loadExportPreview() {
     html += '<th style="position:sticky;right:0;top:0;z-index:2;background:#fff;min-width:70px">总分</th></tr></thead><tbody>';
 
     for (const row of data) {
-      html += '<tr>';
+      html += `<tr data-name="${esc(row.name)}">`;
       html += `<td style="position:sticky;left:0;z-index:1;background:#fff">${esc(row.name)}</td>`;
       for (const gn of groupNames) html += `<td>${row.group_scores[gn] || 0}</td>`;
       html += `<td style="position:sticky;right:0;z-index:1;background:#fff"><strong>${row.total_score}</strong></td>`;
@@ -37,6 +37,21 @@ async function loadExportPreview() {
     container.innerHTML = html;
   } catch(e) {
     container.innerHTML = `<div class="empty">加载失败: ${e.message}</div>`;
+  }
+}
+
+function filterExportTable() {
+  const q = document.getElementById('exportSearch').value.trim().toLowerCase();
+  const rows = document.querySelectorAll('#exportContent tbody tr');
+  rows.forEach(r => r.style.background = '');
+  if (!q) return;
+  for (const r of rows) {
+    const name = (r.getAttribute('data-name') || '').toLowerCase();
+    if (name.includes(q)) {
+      r.style.background = '#e8f0fe';
+      r.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      break;
+    }
   }
 }
 
