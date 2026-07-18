@@ -43,17 +43,12 @@ export async function onRequestGet({ request, env }) {
 
     const data = Object.entries(personTotalScores)
       .sort((a, b) => b[1] - a[1])
-      .map(([name, total], idx, arr) => {
-        const rank = idx === 0 ? 1 :
-          arr[idx - 1][1] === total ? (arr[idx - 1].rank || idx) : idx + 1;
-        arr[idx].rank = rank;
-        return {
-          rank,
-          name,
-          group_scores: personGroupScores[name] || {},
-          total_score: total
-        };
-      });
+      .map(([name, total], idx) => ({
+        rank: idx + 1,
+        name,
+        group_scores: personGroupScores[name] || {},
+        total_score: total
+      }));
 
     return jsonSuccess({ data, total: data.length });
   } catch (error) {
