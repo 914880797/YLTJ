@@ -216,6 +216,16 @@ tr:hover { background: #eef0f5; }
 .loading { text-align: center; padding: 40px; color: #4a6cf7; }
 .empty { text-align: center; padding: 40px; color: #999999; }
 
+.dashboard-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.stat-card { text-align: center; }
+.stat-card-title { color: #888; font-size: 12px; }
+.stat-card-value { color: #4a6cf7; font-size: 28px; font-weight: 700; margin-top: 4px; }
+
 .export-table th, .export-table td { min-width: 90px; padding: 8px 6px; }
 .export-table th:first-child, .export-table td:first-child { min-width: 80px; }
 .export-table th:last-child, .export-table td:last-child { min-width: 70px; }
@@ -254,4 +264,8 @@ tr:hover { background: #eef0f5; }
   .export-table th, .export-table td { min-width: 52px; padding: 5px 4px; font-size: 10px; }
   .export-table th:first-child, .export-table td:first-child { min-width: 58px; }
   .export-table th:last-child, .export-table td:last-child { min-width: 50px; }
+  .dashboard-stats-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .stat-card { padding: 8px 4px; }
+  .stat-card-title { font-size: 10px; }
+  .stat-card-value { font-size: 18px; }
 }

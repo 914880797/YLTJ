@@ -13,7 +13,7 @@ async function loadDashboard() {
     const res = await apiGet('/dashboard');
     if (!res.success) { contentEl.innerHTML = `<div class="empty">${res.error}</div>`; return; }
 
-    let statsHtml = '<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">';
+    let statsHtml = '<div class="dashboard-stats-grid">';
     statsHtml += statCard('总人数', res.total_persons);
     statsHtml += statCard('总记录数', res.total_records);
     statsHtml += statCard('总打卡位数', res.total_slots);
@@ -47,9 +47,9 @@ async function loadDashboard() {
 }
 
 function statCard(title, value) {
-  return `<div class="card" style="text-align:center">
-    <div style="color:#888;font-size:12px">${title}</div>
-    <div style="color:#4a6cf7;font-size:28px;font-weight:700;margin-top:4px">${value}</div>
+    return `<div class="card stat-card">
+    <div class="stat-card-title">${title}</div>
+    <div class="stat-card-value">${value}</div>
   </div>`;
 }
 
