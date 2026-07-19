@@ -65,7 +65,7 @@ async function loadCrossTable() {
       return;
     }
 
-    let html = '<table style="font-size:12px"><thead><tr><th>姓名</th>';
+    let html = '<div class="card" style="padding:0;overflow:hidden"><table style="font-size:12px"><thead><tr><th>姓名</th>';
     for (const col of res.columns) {
       html += `<th>${esc(col.label)}</th>`;
     }
@@ -84,7 +84,7 @@ async function loadCrossTable() {
       }
       html += '</tr>';
     }
-    html += '</tbody></table>';
+  html += '</tbody></table></div>';
     container.innerHTML = html;
     document.getElementById('paginationBar').innerHTML = '';
   } catch(e) {
@@ -104,7 +104,7 @@ function renderView() {
     return;
   }
 
-  let html = '<table><thead><tr>';
+  let html = '<div class="card" style="padding:0;overflow:hidden"><table><thead><tr>';
   html += '<th>姓名</th><th>分组</th><th>时段</th><th>分值</th><th>日期</th><th>导入时间</th>';
   if (getToken()) html += '<th>操作</th>';
   html += '</tr></thead><tbody>';
@@ -125,7 +125,7 @@ function renderView() {
     }
     html += '</tr>';
   }
-  html += '</tbody></table>';
+  html += '</tbody></table></div>';
   container.innerHTML = html;
   container.scrollTop = 0;
 }
