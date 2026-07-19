@@ -21,15 +21,15 @@ async function loadExportPreview() {
     }
 
     let html = '<div class="card" style="padding:0"><table style="min-width:600px;border:1px solid #c0c0c0"><thead><tr>';
-    html += '<th style="position:sticky;left:0;top:0;z-index:2;background:#e8ecf1;min-width:80px;border:1px solid #c0c0c0;font-size:12px;color:#333">姓名</th>';
-    for (const gn of groupNames) html += `<th style="min-width:90px;background:#e8ecf1;border:1px solid #c0c0c0;font-size:12px;color:#333">${esc(gn)}</th>`;
-    html += '<th style="position:sticky;right:0;top:0;z-index:2;background:#e8ecf1;min-width:70px;border:1px solid #c0c0c0;font-size:12px;color:#333">总分</th></tr></thead><tbody>';
+    html += '<th style="position:sticky;left:0;top:0;z-index:2;background:#e8ecf1;min-width:80px;border:1px solid #c0c0c0;font-size:12px;color:#333;text-align:center">姓名</th>';
+    for (const gn of groupNames) html += `<th style="min-width:90px;background:#e8ecf1;border:1px solid #c0c0c0;font-size:12px;color:#333;text-align:center">${esc(gn)}</th>`;
+    html += '<th style="position:sticky;right:0;top:0;z-index:2;background:#e8ecf1;min-width:70px;border:1px solid #c0c0c0;font-size:12px;color:#333;text-align:center">总分</th></tr></thead><tbody>';
 
     for (const row of data) {
       html += `<tr data-name="${esc(row.name)}">`;
       html += `<td style="position:sticky;left:0;z-index:1;background:#fff;border:1px solid #d0d0d0">${esc(row.name)}</td>`;
-      for (const gn of groupNames) html += `<td style="border:1px solid #d0d0d0">${row.group_scores[gn] || 0}</td>`;
-      html += `<td style="position:sticky;right:0;z-index:1;background:#fff;border:1px solid #d0d0d0"><strong>${row.total_score}</strong></td>`;
+      for (const gn of groupNames) html += `<td style="border:1px solid #d0d0d0;text-align:center">${row.group_scores[gn] || 0}</td>`;
+      html += `<td style="position:sticky;right:0;z-index:1;background:#fff;border:1px solid #d0d0d0;text-align:center"><strong>${row.total_score}</strong></td>`;
       html += '</tr>';
     }
 
