@@ -8,9 +8,11 @@ export async function runMigrations(env) {
   try { await env.DB.prepare(`ALTER TABLE announcements ADD COLUMN order_index INTEGER NOT NULL DEFAULT 0`).run(); } catch (e) {}
   try {
     const { results } = await env.DB.prepare(`SELECT id, order_index FROM announcements ORDER BY order_index ASC, id ASC`).all();
-    if (results && results.length > 0 && results[0].order_index !== 1) {
+    if (results && results.length > 0) {
       for (let i = 0; i < results.length; i++) {
-        await env.DB.prepare(`UPDATE announcements SET order_index = ? WHERE id = ?`).bind(i + 1, results[i].id).run();
+        if (results[i].order_index !== i + 1) {
+          await env.DB.prepare(`UPDATE announcements SET order_index = ? WHERE id = ?`).bind(i + 1, results[i].id).run();
+        }
       }
     }
   } catch (e) {}
