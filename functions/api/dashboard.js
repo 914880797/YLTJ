@@ -30,20 +30,34 @@ export async function onRequestGet({ env }) {
 
     const { results: groupSlotCounts } = await env.DB.prepare(
       `SELECT g.id, g.name, COUNT(ts.id) as total_slots
-       FROM groups g
-       LEFT JOIN time_slots ts ON ts.group_id = g.id
-       GROUP BY g.id`
+        FROM groups g
+        LEFT JOIN time_slots ts ON ts.group_id = g.id
+        GROUP BY g.id`
     ).all();
 
-    const totalSlots = (groupSlotCounts || []).reduce((sum, g) => sum + g.total_slots, 0);
+    const groupSlotMap = {};
+    for (const g of (groupSlotCounts || [])) groupSlotMap[g.id] = g.total_slots;
+
+    const { results: personGroups } = await env.DB.prepare(
+      `SELECT DISTINCT person_name, group_id FROM score_records`
+    ).all();
+
+    const personSlotsDone = {};
+    for (const row of (scoreDist || [])) personSlotsDone[row.person_name] = row.total_slots;
+
+    const personExpected = {};
+    for (const row of (personGroups || [])) {
+      const slots = groupSlotMap[row.group_id] || 0;
+      personExpected[row.person_name] = (personExpected[row.person_name] || 0) + slots;
+    }
+
+    const totalSlots = Object.values(groupSlotMap).reduce((a, b) => a + b, 0);
     const missingSlots = [];
 
-    for (const person of (scoreDist || [])) {
-      const done = person.total_slots;
-      const missing = Math.max(0, totalSlots - done);
-      if (missing > 0) {
-        missingSlots.push({ name: person.person_name, done, missing });
-      }
+    for (const [name, expected] of Object.entries(personExpected)) {
+      const done = personSlotsDone[name] || 0;
+      const missing = Math.max(0, expected - done);
+      if (missing > 0) missingSlots.push({ name, done, missing });
     }
 
     return jsonSuccess({
