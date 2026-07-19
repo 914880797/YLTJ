@@ -65,7 +65,7 @@ async function loadCrossTable() {
       return;
     }
 
-    let html = '<div class="card" style="padding:0;overflow:hidden"><table style="font-size:12px"><thead><tr><th>姓名</th>';
+    let html = '<div class="card" style="padding:0"><table style="font-size:12px"><thead><tr><th>姓名</th>';
     for (const col of res.columns) {
       html += `<th>${esc(col.label)}</th>`;
     }
@@ -104,7 +104,7 @@ function renderView() {
     return;
   }
 
-  let html = '<div class="card" style="padding:0;overflow:hidden"><table><thead><tr>';
+  let html = '<div class="card" style="padding:0"><table><thead><tr>';
   html += '<th>姓名</th><th>分组</th><th>时段</th><th>分值</th><th>日期</th><th>导入时间</th>';
   if (getToken()) html += '<th>操作</th>';
   html += '</tr></thead><tbody>';
