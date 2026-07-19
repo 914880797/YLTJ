@@ -216,6 +216,10 @@ tr:hover { background: #eef0f5; }
 .loading { text-align: center; padding: 40px; color: #4a6cf7; }
 .empty { text-align: center; padding: 40px; color: #999999; }
 
+.export-table th, .export-table td { min-width: 90px; padding: 8px 6px; }
+.export-table th:first-child, .export-table td:first-child { min-width: 80px; }
+.export-table th:last-child, .export-table td:last-child { min-width: 70px; }
+
 .main-container {
   width: 70vw;
   height: 90vh;
@@ -247,4 +251,7 @@ tr:hover { background: #eef0f5; }
   .group-item, .announcement-item { flex-direction: column; gap: 8px; align-items: flex-start; }
   .group-actions { width: 100%; justify-content: flex-end; }
   table { font-size: 11px; }
+  .export-table th, .export-table td { min-width: 52px; padding: 5px 4px; font-size: 10px; }
+  .export-table th:first-child, .export-table td:first-child { min-width: 58px; }
+  .export-table th:last-child, .export-table td:last-child { min-width: 50px; }
 }

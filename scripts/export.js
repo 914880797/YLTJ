@@ -20,10 +20,10 @@ async function loadExportPreview() {
       return;
     }
 
-    let html = '<div class="card" style="padding:0"><table style="min-width:600px;border:1px solid #c0c0c0"><thead><tr>';
-    html += '<th style="position:sticky;left:0;top:0;z-index:2;background:#e8ecf1;min-width:80px;border:1px solid #c0c0c0;font-size:12px;color:#333;text-align:center">姓名</th>';
-    for (const gn of groupNames) html += `<th style="min-width:90px;background:#e8ecf1;border:1px solid #c0c0c0;font-size:12px;color:#333;text-align:center">${esc(gn)}</th>`;
-    html += '<th style="position:sticky;right:0;top:0;z-index:2;background:#e8ecf1;min-width:70px;border:1px solid #c0c0c0;font-size:12px;color:#333;text-align:center">总分</th></tr></thead><tbody>';
+    let html = '<div class="card" style="padding:0"><table class="export-table" style="min-width:600px;border:1px solid #c0c0c0"><thead><tr>';
+    html += '<th style="position:sticky;left:0;top:0;z-index:2;background:#e8ecf1;border:1px solid #c0c0c0;font-size:12px;color:#333;text-align:center">姓名</th>';
+    for (const gn of groupNames) html += `<th style="background:#e8ecf1;border:1px solid #c0c0c0;font-size:12px;color:#333;text-align:center">${esc(gn)}</th>`;
+    html += '<th style="position:sticky;right:0;top:0;z-index:2;background:#e8ecf1;border:1px solid #c0c0c0;font-size:12px;color:#333;text-align:center">总分</th></tr></thead><tbody>';
 
     for (const row of data) {
       html += `<tr data-name="${esc(row.name)}">`;
