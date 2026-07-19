@@ -8,6 +8,22 @@ export async function onRequestGet({ request, env }) {
     const url = new URL(request.url);
     const showAll = url.searchParams.get('all') === '1';
     const where = showAll ? '' : 'WHERE is_active = 1';
+
+    const { results: allActive } = await env.DB.prepare(
+      `SELECT id, order_index FROM announcements ${where} ORDER BY order_index ASC, id ASC`
+    ).all();
+    if (allActive && allActive.length > 0) {
+      let needFix = false;
+      for (let i = 0; i < allActive.length; i++) {
+        if (allActive[i].order_index !== i + 1) { needFix = true; break; }
+      }
+      if (needFix) {
+        for (let i = 0; i < allActive.length; i++) {
+          await env.DB.prepare(`UPDATE announcements SET order_index = ? WHERE id = ?`).bind(i + 1, allActive[i].id).run();
+        }
+      }
+    }
+
     const { results } = await env.DB.prepare(
       `SELECT id, content, is_active, order_index, created_at FROM announcements ${where} ORDER BY order_index ASC, id ASC`
     ).all();
