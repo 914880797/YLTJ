@@ -25,12 +25,6 @@ function renderMissingPage(pg) {
   contentEl.innerHTML = html;
 }
 
-function esc(s) {
-  const div = document.createElement('div');
-  div.textContent = s;
-  return div.innerHTML;
-}
-
 async function loadDashboard() {
   const statsEl = document.getElementById('dashboardStats');
   const contentEl = document.getElementById('dashboardContent');

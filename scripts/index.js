@@ -44,12 +44,6 @@ async function loadRankings() {
   }
 }
 
-function esc(s) {
-  const div = document.createElement('div');
-  div.textContent = s;
-  return div.innerHTML;
-}
-
 async function loadAnnouncements() {
   const bar = document.getElementById('announcementBar');
   if (!bar) return;

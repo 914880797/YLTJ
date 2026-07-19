@@ -1,5 +1,5 @@
 import { jsonSuccess, jsonError, verifyAdmin, formatBeijingNow } from './_shared.js';
-import { autoScoreReward, previewRewardScore } from './_reward-score.js';
+import { autoScore, previewAutoScore, SCORE_TYPES } from './_score-engine.js';
 import { runMigrations } from './_migrate.js';
 
 export async function onRequestGet({ request, env }) {
@@ -51,11 +51,11 @@ export async function onRequestPost({ request, env }) {
 
     if (type === 'slot') return addRewardSlotPerson(body, env);
     if (type === 'auto-score') {
-      const result = await autoScoreReward(env, body.date);
+      const result = await autoScore(env, body.date, SCORE_TYPES.reward);
       return jsonSuccess(result);
     }
     if (type === 'auto-score-preview') {
-      const result = await previewRewardScore(env, body.date);
+      const result = await previewAutoScore(env, body.date, SCORE_TYPES.reward);
       return jsonSuccess(result);
     }
     if (type === 'remove-exclusion') {

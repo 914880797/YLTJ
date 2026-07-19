@@ -1,9 +1,3 @@
-function esc(s) {
-  const div = document.createElement('div');
-  div.textContent = s;
-  return div.innerHTML;
-}
-
 async function loadExportPreview() {
   const container = document.getElementById('exportContent');
   container.innerHTML = '<div class="loading">加载中...</div>';

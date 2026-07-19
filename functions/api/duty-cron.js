@@ -1,5 +1,5 @@
 import { jsonSuccess, jsonError } from './_shared.js';
-import { autoScoreDuty } from './_duty-score.js';
+import { autoScore, SCORE_TYPES } from './_score-engine.js';
 
 export async function onRequestGet({ request, env }) {
   const url = new URL(request.url);
@@ -10,6 +10,6 @@ export async function onRequestGet({ request, env }) {
   const expectedKey = env.DUTY_CRON_SECRET || 'yltj-duty-cron-2026';
   if (key !== expectedKey) return jsonError('密钥错误', 401);
 
-  const result = await autoScoreDuty(env);
+  const result = await autoScore(env, null, SCORE_TYPES.duty);
   return jsonSuccess(result);
 }

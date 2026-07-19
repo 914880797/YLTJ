@@ -5,12 +5,6 @@ let totalPages = 1;
 let totalRecords = 0;
 const PAGE_SIZE = 50;
 
-function esc(s) {
-  const div = document.createElement('div');
-  div.textContent = s;
-  return div.innerHTML;
-}
-
 function showToast(msg, isError) {
   const existing = document.querySelector('.toast');
   if (existing) existing.remove();

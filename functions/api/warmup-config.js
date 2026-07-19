@@ -1,5 +1,5 @@
 import { jsonSuccess, jsonError, verifyAdmin, formatBeijingNow } from './_shared.js';
-import { autoScoreWarmup, previewAutoScore } from './_warmup-score.js';
+import { autoScore, previewAutoScore, SCORE_TYPES } from './_score-engine.js';
 import { runMigrations } from './_migrate.js';
 
 export async function onRequestGet({ request, env }) {
@@ -68,11 +68,11 @@ export async function onRequestPost({ request, env }) {
     if (type === 'group') return addWarmupGroup(body, env);
     if (type === 'slot') return addWarmupSlotPerson(body, env);
     if (type === 'auto-score') {
-      const result = await autoScoreWarmup(env, body.date);
+      const result = await autoScore(env, body.date, SCORE_TYPES.warmup);
       return jsonSuccess(result);
     }
     if (type === 'auto-score-preview') {
-      const result = await previewAutoScore(env, body.date);
+      const result = await previewAutoScore(env, body.date, SCORE_TYPES.warmup);
       return jsonSuccess(result);
     }
     if (type === 'remove-exclusion') {
