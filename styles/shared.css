@@ -216,7 +216,35 @@ tr:hover { background: #eef0f5; }
 .loading { text-align: center; padding: 40px; color: #4a6cf7; }
 .empty { text-align: center; padding: 40px; color: #999999; }
 
+.main-container {
+  width: 70vw;
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-width: none;
+}
+
 @media (max-width: 768px) {
-  body { padding: 8px; }
-  th, td { padding: 6px 8px; font-size: 12px; }
+  body { padding: 0; }
+  .main-container {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    padding: 12px;
+  }
+  h1 { font-size: 18px; margin-bottom: 10px; }
+  .nav-row { gap: 4px; margin-bottom: 10px; }
+  .btn { padding: 8px 12px; font-size: 12px; }
+  .back-btn { padding: 6px 10px; font-size: 11px; }
+  th, td { padding: 6px 8px; font-size: 11px; }
+  .card { padding: 12px; margin-bottom: 10px; }
+  .search-box { padding: 8px 12px; font-size: 13px; margin-bottom: 10px; }
+  .form-input, select { padding: 8px 10px; font-size: 13px; }
+  .modal { width: 95%; max-width: none; padding: 16px; border-radius: 12px; }
+  .admin-tabs { gap: 2px; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 6px; }
+  .admin-tab { padding: 6px 10px; font-size: 11px; white-space: nowrap; }
+  .group-item, .announcement-item { flex-direction: column; gap: 8px; align-items: flex-start; }
+  .group-actions { width: 100%; justify-content: flex-end; }
+  table { font-size: 11px; }
 }
