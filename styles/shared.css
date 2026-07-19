@@ -17,12 +17,6 @@ body {
 a { color: #4a6cf7; text-decoration: none; }
 a:hover { text-decoration: underline; }
 
-h1 {
-  color: #333333;
-  font-size: 22px;
-  margin-bottom: 16px;
-}
-
 .nav-row {
   display: flex;
   flex-wrap: wrap;
@@ -247,7 +241,6 @@ tr:hover { background: #eef0f5; }
     border-radius: 0;
     padding: 12px;
   }
-  h1 { font-size: 18px; margin-bottom: 10px; }
   .nav-row { gap: 4px; margin-bottom: 10px; }
   .btn { padding: 8px 12px; font-size: 12px; }
   .back-btn { padding: 6px 10px; font-size: 11px; }
