@@ -65,7 +65,7 @@ export async function onRequestGet({ env }) {
       total_records: recordCount?.[0]?.total || 0,
       group_averages: groupAverages || [],
       score_distribution: scoreDist || [],
-      missing_slots: missingSlots.slice(0, 20),
+      missing_slots: missingSlots,
       total_slots: totalSlots
     });
   } catch (error) {
