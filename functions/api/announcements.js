@@ -7,27 +7,52 @@ export async function onRequestGet({ request, env }) {
 
     const url = new URL(request.url);
     const showAll = url.searchParams.get('all') === '1';
-    const where = showAll ? '' : 'WHERE is_active = 1';
+    const forceReset = url.searchParams.get('reset') === '1';
+    const forceRenumber = url.searchParams.get('renumber') === '1';
 
-    const { results: allActive } = await env.DB.prepare(
-      `SELECT id, order_index FROM announcements ${where} ORDER BY order_index ASC, id ASC`
+    const { results: all } = await env.DB.prepare(
+      `SELECT id, is_active, order_index FROM announcements ORDER BY id ASC`
     ).all();
-    if (allActive && allActive.length > 0) {
-      let needFix = false;
-      for (let i = 0; i < allActive.length; i++) {
-        if (allActive[i].order_index !== i + 1) { needFix = true; break; }
+
+    const total = (all || []).length;
+
+    if (total > 0) {
+      const active = (all || []).filter(r => r.is_active === 1);
+      const inactive = (all || []).filter(r => r.is_active !== 1);
+
+      if (forceReset) {
+        for (const r of inactive) {
+          await env.DB.prepare(`DELETE FROM announcements WHERE id = ?`).bind(r.id).run();
+        }
+        const remaining = await env.DB.prepare(`SELECT id FROM announcements ORDER BY id ASC`).all();
+        if (remaining.results) {
+          for (let i = 0; i < remaining.results.length; i++) {
+            await env.DB.prepare(`UPDATE announcements SET order_index = ? WHERE id = ?`).bind(i + 1, remaining.results[i].id).run();
+          }
+        }
+        return jsonSuccess({
+          message: `已清理 ${inactive.length} 条停用记录，重新编号完成`,
+          cleaned: inactive.length,
+          remaining: remaining.results ? remaining.results.length : 0
+        });
       }
-      if (needFix) {
-        for (let i = 0; i < allActive.length; i++) {
-          await env.DB.prepare(`UPDATE announcements SET order_index = ? WHERE id = ?`).bind(i + 1, allActive[i].id).run();
+
+      if (forceRenumber || (active.length > 0 && (active[0].order_index !== 1 || active.length < total))) {
+        for (let i = 0; i < active.length; i++) {
+          await env.DB.prepare(`UPDATE announcements SET order_index = ? WHERE id = ?`).bind(i + 1, active[i].id).run();
         }
       }
     }
 
+    const where = showAll || forceRenumber || forceReset ? '' : 'WHERE is_active = 1';
     const { results } = await env.DB.prepare(
       `SELECT id, content, is_active, order_index, created_at FROM announcements ${where} ORDER BY order_index ASC, id ASC`
     ).all();
-    return jsonSuccess({ data: results || [] });
+
+    return jsonSuccess({
+      data: results || [],
+      _debug: { total, active_count: (all || []).filter(r => r.is_active === 1).length, inactive_count: (all || []).filter(r => r.is_active !== 1).length }
+    });
   } catch (error) {
     return jsonError(error.message);
   }

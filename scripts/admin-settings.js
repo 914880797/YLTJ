@@ -17,6 +17,7 @@ async function loadAnnouncements() {
   html += `<div style="margin-top:8px; display:flex; gap:6px;">
     <input type="text" id="newAnnouncementContent" class="form-input" placeholder="输入公告内容" style="flex:1">
     <button class="btn btn-primary" onclick="addAnnouncement()">发布</button>
+    <button class="btn btn-outline" style="font-size:11px;padding:3px 10px" onclick="cleanAnnouncements()">整理序号</button>
   </div>`;
   container.innerHTML = html;
 }
@@ -85,4 +86,11 @@ async function updateGroupWeight(groupId) {
   const res = await apiAuthPut('/groups', { id: groupId, score_weight: weight }, adminToken);
   showToast(res.success ? '分值已更新' : (res.error || '操作失败'), !res.success);
   if (res.success) loadSettings();
+}
+
+async function cleanAnnouncements() {
+  if (!confirm('将清理所有已停用的公告记录，并重新整理序号。确定继续？')) return;
+  const res = await apiGet('/announcements?reset=1');
+  showToast(res.success ? (res.message || '整理完成') : (res.error || '操作失败'), !res.success);
+  if (res.success) loadAnnouncements();
 }
